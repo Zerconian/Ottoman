@@ -19,11 +19,36 @@ GAMEPAD = {  # evdev button -> key name
 HAT = {(e.ABS_HAT0X, -1): "left", (e.ABS_HAT0X, 1): "right", (e.ABS_HAT0Y, -1): "up", (e.ABS_HAT0Y, 1): "down"}
 
 ui = UInput({e.EV_KEY: sorted(set(KEYS.values()))}, name="Ottoman remote", version=1)
+# Pointer mode (M4.1): web players are built for a mouse. A long press on Menu (or the phone page's Pointer button)
+# flips the D-pad into moving a virtual mouse and OK into a click; Back/Home/Menu leave it. Separate uinput mouse.
+mouse = UInput({e.EV_KEY: [e.BTN_LEFT, e.BTN_RIGHT], e.EV_REL: [e.REL_X, e.REL_Y, e.REL_WHEEL]}, name="Ottoman pointer", version=1)
 lock = threading.Lock()
+pointer = {"on": False, "step": 18}
+POINTER_MOVES = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
+
+def pointer_set(on):
+    pointer["on"] = bool(on); log("pointer mode " + ("on" if pointer["on"] else "off"))
+
+def pointer_key(name, hold_ms=0):
+    """Handle a key while pointer mode is on. Returns True if consumed."""
+    if name in POINTER_MOVES:
+        dx, dy = POINTER_MOVES[name]; n = 3 if hold_ms else 1
+        with lock:
+            for _ in range(n): mouse.write(e.EV_REL, e.REL_X, dx * pointer["step"]); mouse.write(e.EV_REL, e.REL_Y, dy * pointer["step"]); mouse.syn()
+        return True
+    if name == "ok":
+        with lock: mouse.write(e.EV_KEY, e.BTN_LEFT, 1); mouse.syn(); time.sleep(0.05); mouse.write(e.EV_KEY, e.BTN_LEFT, 0); mouse.syn()
+        return True
+    if name in ("back", "home", "menu"):
+        pointer_set(False); return name == "menu"      # Back/Home still reach the system after leaving pointer mode
+    return False
 
 def log(msg): print("inputd:", msg, flush=True)
 
 def press(name, hold_ms=0):
+    if name == "pointer": pointer_set(not pointer["on"]); return True
+    if name == "menu" and hold_ms >= 500: pointer_set(not pointer["on"]); return True
+    if pointer["on"] and pointer_key(name, hold_ms): return True
     code = KEYS.get(name)
     if code is None: return False
     with lock:
@@ -44,6 +69,7 @@ button:active{background:#ffffff;color:#111}.ok{background:#2a2f38}.wide{grid-co
 <button data-k=left>&#9664;</button><button class=ok data-k=ok>OK</button><button data-k=right>&#9654;</button>
 <button data-k=back>Back</button><button data-k=down>&#9660;</button><button data-k=play>&#9654;&#10074;&#10074;</button>
 <button data-k=voldown>Vol &minus;</button><button data-k=mute>Mute</button><button data-k=volup>Vol +</button>
+<button class=wide data-k=pointer>Pointer mode (D-pad moves the mouse, OK clicks)</button>
 </div><script>
 let t;for(const b of document.querySelectorAll('button')){
  const send=(hold)=>fetch('/key?name='+b.dataset.k+(hold?'&hold=800':''),{method:'POST'});
@@ -65,7 +91,7 @@ class H(http.server.BaseHTTPRequestHandler):
     def do_POST(self):
         u = urllib.parse.urlparse(self.path); q = urllib.parse.parse_qs(u.query)
         if u.path == "/key" and press(q.get("name", [""])[0], int(q.get("hold", ["0"])[0] or 0)):
-            log(f"key {q['name'][0]} from {self.client_address[0]}" + (" (hold)" if q.get("hold") else ""))
+            log(f"key {q['name'][0]} from {self.client_address[0]}" + (" (hold)" if q.get("hold") else "") + (" [pointer]" if pointer["on"] else ""))
             self.send_response(204); self.end_headers()
         else: self.send_error(400)
 
@@ -88,6 +114,7 @@ def pump(path, d):
     try:
         for ev in d.read_loop():
             if ev.type == e.EV_KEY and ev.value == 1 and ev.code in GAMEPAD: press(GAMEPAD[ev.code]); log(f"gamepad {d.name}: {GAMEPAD[ev.code]}")
+            elif ev.type == e.EV_KEY and ev.value == 1 and ev.code == e.BTN_THUMBR: press("pointer")
             elif ev.type == e.EV_ABS and (ev.code, ev.value) in HAT: press(HAT[(ev.code, ev.value)]); log(f"gamepad {d.name}: {HAT[(ev.code, ev.value)]}")
     except OSError as ex: log(f"gamepad {d.name} gone: {ex}")
 
