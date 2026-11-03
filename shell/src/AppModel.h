@@ -50,6 +50,10 @@ private:
     QStringList m_order, m_hidden;
     QString m_busy;
     QStringList m_queue; int m_queueFailed = 0;
+    bool m_setupRunning = false;
+public:
+    Q_INVOKABLE bool setupRunning() const { return m_setupRunning; }
+private:
     void nextInQueue();
     QTimer m_poll;
 };

@@ -10,7 +10,12 @@ Rectangle {
     property var wifi: []
     property string message: ""
     property string joinSsid: ""
-    function refresh() { st = system.netStatus(); build() }
+    // Prefetch (zerc, 2026-11-03): as soon as a connection is up, the default apps start downloading in the background while
+    // the welcome screen is still showing. Wired: at boot. Wi-Fi: after the join, never before.
+    property bool prefetching: false
+    property int prefetchDone: 0
+    property bool prefetchFinished: false
+    function refresh() { st = system.netStatus(); build(); if (st.kind !== "none" && !prefetching && !prefetchFinished) { prefetching = true; setupRows = apps.defaults().map(function(d) { return {label: d.name, value: d.installed ? "already installed" : "waiting"} }); system.log("firstrun prefetch start"); apps.installDefaults() } }
     function build() {
         const items = []
         if (st.kind !== "none") items.push({label: "Continue", value: (st.kind === "ethernet" ? "Wired" : "Wi-Fi") + "  " + st.ip, action: "done"})
@@ -34,11 +39,15 @@ Rectangle {
     property bool setup: false
     property var setupRows: []
     property int setupFailed: -1
-    function startSetup() { setup = true; setupRows = apps.defaults().map(function(d) { return {label: d.name, value: d.installed ? "already installed" : "waiting"} }); setupList.items = setupRows; setupList.currentIndex = 0; setupList.forceActiveFocus(); system.log("firstrun setup start"); apps.installDefaults() }
-    function setRow(name, state) { const r = setupRows.slice(); for (const x of r) if (x.label === name) x.value = state === "installing" ? "installing..." : state === "skipped" ? "already installed" : state; setupRows = r; setupList.items = r }
+    function startSetup() {
+        if (prefetchFinished && setupFailed === 0) { system.markFirstRunDone(); done(); return }     // everything landed while they read the welcome
+        setup = true; if (setupRows.length === 0) setupRows = apps.defaults().map(function(d) { return {label: d.name, value: d.installed ? "already installed" : "waiting"} })
+        setupList.items = setupRows; setupList.currentIndex = 0; setupList.forceActiveFocus(); system.log("firstrun setup start"); apps.installDefaults()
+    }
+    function setRow(name, state) { const r = setupRows.slice(); for (const x of r) if (x.label === name) x.value = state === "installing" ? "installing..." : state === "skipped" ? "already installed" : state; setupRows = r; setupList.items = r; if (state === "done" || state === "skipped") prefetchDone++ }
     Connections { target: apps
         function onSetupProgress(name, state) { setRow(name, state) }
-        function onSetupDone(failed) { setupFailed = failed; system.log("firstrun setup done, failed " + failed); if (failed === 0) { system.markFirstRunDone(); done() } else { setupList.items = setupRows.concat([{label: "Retry the failed ones", value: "", action: "retry"}, {label: "Continue anyway", value: "", action: "finish"}]); setupList.currentIndex = setupList.items.length - 2 } }
+        function onSetupDone(failed) { setupFailed = failed; prefetchFinished = true; prefetching = false; system.log("firstrun setup done, failed " + failed); if (!page.setup) { message = failed === 0 ? "Default apps are ready." : failed + " app(s) failed to install, Continue shows which."; return } if (failed === 0) { system.markFirstRunDone(); done() } else { setupList.items = setupRows.concat([{label: "Retry the failed ones", value: "", action: "retry"}, {label: "Continue anyway", value: "", action: "finish"}]); setupList.currentIndex = setupList.items.length - 2 } }
     }
     Component.onCompleted: { refresh(); if (visible) list.forceActiveFocus() }     // initial visible=true never fires onVisibleChanged
     onVisibleChanged: if (visible) { refresh(); list.forceActiveFocus() }
@@ -50,7 +59,7 @@ Rectangle {
         onActivated: function(i) { act(i) }
         onActiveFocusChanged: if (activeFocus && items[currentIndex]) system.log("firstrun focus " + currentIndex + " " + items[currentIndex].label)
         onCurrentIndexChanged: if (activeFocus && items[currentIndex]) system.log("firstrun option " + currentIndex + " " + items[currentIndex].label) }
-    Text { text: page.message; color: "#d8dadf"; font.pixelSize: 22; anchors { left: parent.left; bottom: parent.bottom; margins: 48 } }
+    Text { text: page.message.length ? page.message : (page.prefetching ? "Downloading the default apps in the background (" + page.prefetchDone + " of " + page.setupRows.length + " done). Continue whenever you like." : ""); color: "#d8dadf"; font.pixelSize: 22; anchors { left: parent.left; bottom: parent.bottom; margins: 48 } }
     Rectangle { id: joinPanel; visible: false; anchors.fill: parent; color: "#e6101214"
         Column { anchors.centerIn: parent; spacing: 18
             Text { text: "Join " + page.joinSsid; color: "#f2f2f2"; font.pixelSize: 32; font.bold: true }

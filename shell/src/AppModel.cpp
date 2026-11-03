@@ -175,13 +175,15 @@ QVariantList AppModel::defaults() const {
     return l;
 }
 void AppModel::installDefaults() {
+    if (m_setupRunning) { qInfo() << "setup: already running"; return; }     // prefetch started it; Continue must not restart it
+    m_setupRunning = true;
     refreshInstalled();
     m_queue.clear(); m_queueFailed = 0;
     for (const QVariant &v : defaults()) { const QVariantMap m = v.toMap(); if (m["installed"].toBool()) emit setupProgress(m["name"].toString(), "skipped"); else m_queue << m["flatpakId"].toString(); }
     nextInQueue();
 }
 void AppModel::nextInQueue() {
-    if (m_queue.isEmpty()) { refresh(); emit setupDone(m_queueFailed); return; }
+    if (m_queue.isEmpty()) { m_setupRunning = false; refresh(); emit setupDone(m_queueFailed); return; }
     const QString id = m_queue.takeFirst();
     QString name = id; for (const AppEntry &a : m_apps) if (a.flatpakId == id) { name = a.flatpakId == "org.mozilla.firefox" ? QStringLiteral("Firefox (Netflix, Disney+, Max)") : a.name; break; }
     emit setupProgress(name, "installing");
