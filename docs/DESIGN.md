@@ -18,6 +18,12 @@ Decided (zerc, 2026-11-02):
 - Netflix / Disney+ / etc. installable on the side "via their flatpak/repo", at whatever quality
   Linux DRM allows.
 - Accepted limit: it is "nigh impossible" to fully recreate the Shield; "we can get pretty close".
+- Base OS, shell and streaming wrappers: zerc delegated the pick to Claude (2026-11-02: "you pick
+  the best one that fits the bill", "I'll defer to your choice"). Those items below are therefore
+  **decided (delegated)**, overturnable by zerc at any time.
+- Gaming: "defer to Steam to handle that since it literally does it all already"; RetroArch-level
+  emulation is as far as this variant goes (zerc, 2026-11-02).
+- First target box: zerc's Lenovo Tiny, 2c/4t Intel on DDR3, 8-16 GB (§4.7).
 
 Not a goal (follows from the DRM ceiling, see §2): 4K/HDR commercial streaming. The UI says so
 plainly where a user would expect it, instead of letting them discover 720p by eye.
@@ -65,7 +71,7 @@ Detail: memory `project_landscape_2026-11.md`.
  └──────────────────────────────────────────────────────────┘
 ```
 
-### 4.1 Base OS *[proposed: Fedora bootc image]*
+### 4.1 Base OS: Fedora bootc image (decided, delegated 2026-11-02)
 - **Chosen:** a `bootc` image built from `quay.io/fedora/fedora-bootc` with a Containerfile. Atomic
   A/B updates with rollback, image signed and pulled from a registry, Flatpak native, current
   Intel/AMD graphics stack. Bazzite/Universal Blue prove the model for living-room boxes.
@@ -73,7 +79,10 @@ Detail: memory `project_landscape_2026-11.md`.
   hand-built add-on; kills the "install Netflix from their flatpak" goal. **Debian/Ubuntu minimal +
   kiosk session**: familiar, but package updates break like a desktop and there is no rollback.
   **Android-x86 fork**: real Android TV apps, but hardware support lags, still L3, enormous
-  maintenance; MRD Team's bug list is the evidence.
+  maintenance; MRD Team's bug list is the evidence. **Arch**: zerc offered it; rolling and lean,
+  but no atomic A/B update and rollback without building that machinery ourselves, and a rolling
+  base on an appliance means every update is a gamble with no safety net. Fedora ships `bootc`,
+  `bootc-image-builder` and a current mesa/VA-API stack; its x86-64-v2 baseline runs Haswell.
 - "Minimal" is measured, not felt: targets in §8.
 
 ### 4.2 Compositor *[proposed: cage, gamescope as fallback]*
@@ -83,7 +92,7 @@ Detail: memory `project_landscape_2026-11.md`.
   controllers, does HDR/VRR/scaling) hosts the launcher as its primary app. Decide by measurement in
   M1 on real hardware.
 
-### 4.3 Shell *[proposed: own QML launcher]*
+### 4.3 Shell: own Qt/QML launcher (decided, delegated 2026-11-02)
 - A Qt 6 / QML app. QML has remote-style focus navigation built in, is GPU-accelerated and idles
   around 60-100 MB; Android TV's leanback layout (rows of cards, left rail) maps directly.
 - Lost: **Plasma Bigscreen**: ready UI, but pulls in Plasma and we do not own the UX; revisit if our
@@ -101,7 +110,7 @@ Detail: memory `project_landscape_2026-11.md`.
   we may have to package it), Moonlight, RetroArch, Steam (optional tier, needs the gaming GPU
   path), Firefox or Chromium (keyboard-ish; "with a remote this is rough").
 
-### 4.5 YouTube and streaming wrappers *[proposed: one web-app runner]*
+### 4.5 YouTube and streaming wrappers: one web-app runner (decided, delegated 2026-11-02)
 - `anybox-webapp`: a Chromium-based (or WebKitGTK; measure Widevine availability) kiosk runner that
   opens a site fullscreen with a TV user agent and maps remote keys to the site's keys. YouTube uses
   `youtube.com/tv` (the leanback UI YouTube ships to smart TVs); Netflix/Disney+/Max open their web
@@ -115,10 +124,33 @@ Detail: memory `project_landscape_2026-11.md`.
   phone web remote served on the LAN, into one key set: DPAD, OK, Back, Home, Menu, Play/Pause,
   volume. Apps see standard keyboard/gamepad events.
 
-### 4.7 Hardware floor *[proposed]*
-- Intel 7th gen+ or AMD Ryzen APU (HEVC 10-bit + VP9 decode via VA-API); AV1 on Intel 11th gen+
-  / RDNA2+. NVIDIA secondary (nouveau/NVK first; proprietary driver as an opt-in layer). 4 GB RAM,
-  16 GB disk. HDMI audio passthrough (TrueHD/DTS-HD) via PipeWire; verify in Kodi and Jellyfin MP.
+### 4.7 Hardware: the floor is zerc's box
+
+**Target box (zerc, 2026-11-02):** a Lenovo Tiny, "some weird 2c/4t Intel series on DDR3", 8-16 GB.
+DDR3 + 2c/4t in a Lenovo Tiny shell points at a ThinkCentre M73 / M93p Tiny with a Haswell
+Core i3-4130T/4150T/4160T and HD Graphics 4400 (Lenovo's M73 Tiny spec sheet lists exactly those).
+*[to confirm: `lscpu | grep 'Model name'` on the box, or the model label.]*
+
+What Haswell means, from Intel's media capabilities (not the search engine's guess):
+- Hardware decode: H.264 (and MPEG-2, VC-1) via VA-API. **No HEVC, no VP9, no AV1** in hardware;
+  those decode in software. 2c/4t handles 1080p HEVC 8-bit in software at best; 4K HEVC does not play.
+- Output: HDMI 1.4a (4K at 30 Hz) and DisplayPort 1.2 (4K at 60 Hz). **No HDR.**
+- So on this box the media server transcodes anything that is not H.264, which is exactly the
+  "leftover box" audience and a good floor to design for.
+
+Tiers *[proposed]*:
+
+| Tier | Hardware | What plays direct |
+|---|---|---|
+| Floor | x86-64-v2, any VA-API H.264 decoder (Haswell, zerc's box) | 1080p H.264; everything else server-transcoded |
+| Good | Intel Kaby Lake (7th gen) + / AMD Ryzen APU, HDMI 2.0 | 4K HEVC 10-bit, VP9, HDR10 |
+| Best | Intel 11th gen + / RDNA2 +, HDMI 2.1 | adds AV1, 4K120 |
+
+4 GB RAM and 16 GB disk minimum. NVIDIA secondary (nouveau/NVK first; proprietary driver as an
+opt-in layer). HDMI audio passthrough (TrueHD/DTS-HD) via PipeWire; verify in Kodi and Jellyfin MP
+on a box that has it (zerc's Tiny has no receiver path to test, so this waits for other hardware).
+M1 measures boot time, idle RAM and 1080p H.264 direct-play on the Tiny; 4K/HDR claims wait for a
+Good-tier box.
 
 ### 4.8 Updates and distribution *[proposed]*
 - OS: `bootc upgrade` on a timer, apply on next boot, automatic rollback on failed boot; the UI
@@ -127,7 +159,27 @@ Detail: memory `project_landscape_2026-11.md`.
   Gitea's registry for development, a public registry when there is a public release.
 - Public faces never advertise component versions (zerc's rule); the About screen is local.
 
-## 5. Open questions (batch 1, 2026-11-02)
+### 4.9 Gaming: defer to Steam (decided 2026-11-02)
+- No Steam integration, no gamescope session, no GPU-driver matrix. Steam's own boxes and the Steam
+  Frame do that already; "reinventing the wheel seems dubious" (zerc).
+- RetroArch (Flatpak) in the TV-ready tier for emulation; that is the ceiling for this variant.
+- *[proposed]* Steam Link and Moonlight clients in the TV-ready tier: they stream from a gaming PC,
+  cost nothing to support, and are the literal form of "defer to Steam".
+
+## 5. Open questions
+
+### Batch 1 (2026-11-02): answered
+1. Base OS: delegated, Fedora bootc (§4.1). 2. Shell: delegated, own QML launcher (§4.3).
+3. Wrappers: delegated, one web-app runner (§4.5). 4. Target box: Lenovo Tiny, Haswell-class (§4.7).
+5. Gaming: defer to Steam, RetroArch only (§4.9). 6. Name: decide first, then zerc recreates the repo
+under the new name and the working directory moves.
+
+### Batch 2 (2026-11-02): open
+- Name (shortlist in chat; collisions checked 2026-11-02: no OS/distro named Ottoman, Tenfoot,
+  Mantel or Divan; "Plinth" was FreedomBox's old UI name; "Anybox" is a Mac bookmark manager).
+- Confirm the Tiny's CPU model.
+
+## 5a. Batch 1 original list (2026-11-02)
 
 See the chat batch of the same date; answers land here as decided items.
 
@@ -146,7 +198,7 @@ remote + local settings web UI, 18821 shell API. Bind failure is fatal, never ho
 | M | Deliverable | Proof |
 |---|---|---|
 | M0 | this doc signed off | zerc's answers recorded |
-| M1 | bootc image boots to cage + Jellyfin Media Player on a VM and one real box | boot time, idle RAM, direct-play 4K HEVC measured |
+| M1 | bootc image boots to cage + Jellyfin Media Player on a VM and the Lenovo Tiny | boot time, idle RAM, 1080p H.264 direct-play measured on the Tiny |
 | M2 | QML launcher: app grid, launch/exit Flatpaks, back-to-home | remote-only walkthrough, no keyboard |
 | M3 | inputd: CEC, IR, BT, phone remote | each path drives the M2 walkthrough |
 | M4 | web-app runner: YouTube TV, one Widevine site | playback + the quality cap shown |
