@@ -7,6 +7,9 @@
 SAVER_SECS=300; OFF_SECS=1800
 [ -f "$HOME/.config/ottoman/idle.conf" ] && . "$HOME/.config/ottoman/idle.conf"
 # Each command is ONE argument to swayidle (an unquoted "saver.sh on" made it exit at session start, 2026-11-03).
-exec swayidle \
-  timeout "$SAVER_SECS" "/usr/libexec/ottoman/saver.sh on"  resume "/usr/libexec/ottoman/saver.sh off" \
-  timeout "$OFF_SECS"   "/usr/libexec/ottoman/dpms.sh off"  resume "/usr/libexec/ottoman/dpms.sh on"
+# 0 = never (Settings > Display): swayidle rejects timeout 0, so the pair is left out.
+ARGS=()
+[ "$SAVER_SECS" -gt 0 ] && ARGS+=(timeout "$SAVER_SECS" "/usr/libexec/ottoman/saver.sh on"  resume "/usr/libexec/ottoman/saver.sh off")
+[ "$OFF_SECS" -gt 0 ]   && ARGS+=(timeout "$OFF_SECS"   "/usr/libexec/ottoman/dpms.sh off"  resume "/usr/libexec/ottoman/dpms.sh on")
+[ ${#ARGS[@]} -eq 0 ] && exec sleep infinity
+exec swayidle "${ARGS[@]}"

@@ -160,6 +160,25 @@ void System::log(const QString &line) const { qInfo().noquote() << "ui:" << line
 bool System::firstRunDone() const { return QFile::exists(cfg("firstrun-done")); }
 void System::markFirstRunDone() const { QFile f(cfg("firstrun-done")); f.open(QIODevice::WriteOnly); f.write("done\n"); qInfo() << "system: first run done"; }
 
+static QString confValue(const QString &file, const QString &key, const QString &dflt) {
+    QFile f(file); if (!f.open(QIODevice::ReadOnly)) return dflt;
+    for (const QString &l : QString::fromUtf8(f.readAll()).split('\n')) if (l.startsWith(key + "=")) return l.mid(key.size() + 1).trimmed();
+    return dflt;
+}
+QVariantMap System::saverConfig() const {
+    return {{"mode", confValue(cfg("saver.conf"), "MODE", "clock")}, {"saverSecs", confValue(cfg("idle.conf"), "SAVER_SECS", "300").toInt()}, {"offSecs", confValue(cfg("idle.conf"), "OFF_SECS", "1800").toInt()}};
+}
+void System::setSaverMode(const QString &mode) const {
+    QFile f(cfg("saver.conf")); f.open(QIODevice::WriteOnly | QIODevice::Truncate); f.write(("MODE=" + mode + "\n").toUtf8()); qInfo() << "system: saver mode" << mode;
+}
+void System::setIdle(int saverSecs, int offSecs) const {
+    QFile f(cfg("idle.conf")); f.open(QIODevice::WriteOnly | QIODevice::Truncate); f.write(QStringLiteral("SAVER_SECS=%1\nOFF_SECS=%2\n").arg(saverSecs).arg(offSecs).toUtf8()); f.close();
+    QProcess::execute(QStringLiteral("pkill"), {"-x", "swayidle"});                       // idle.sh execs swayidle; sway's exec gave it SWAYSOCK, so do we
+    QProcess::startDetached(QStringLiteral("/usr/libexec/ottoman/idle.sh"), {});
+    qInfo() << "system: idle timings" << saverSecs << offSecs << "(swayidle restarted)";
+}
+void System::previewSaver() const { QProcess::startDetached(QStringLiteral("/usr/libexec/ottoman/saver.sh"), {"on"}); qInfo() << "system: saver preview"; }
+
 void System::setLocale(const QString &lang) const {
     bool ok; run("sudo", {"-n", "/usr/bin/localectl", "set-locale", "LANG=" + lang}, 10000, &ok);
     qInfo().noquote() << "system: set-locale" << lang << (ok ? "ok" : "FAILED");

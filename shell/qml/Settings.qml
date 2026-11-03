@@ -23,6 +23,11 @@ Rectangle {
         } else if (section === 1) {
             for (const o of system.outputs()) { items.push({label: o.name + "  " + o.make, value: o.currentLabel}); for (const m of o.modes) items.push({label: "    " + m.label, value: m.value === o.current ? "current" : "", action: "mode", output: o.name, mode: m.value, previous: o.current}) }
             if (items.length === 0) items.push({label: "No display found", value: ""})
+            const sv = system.saverConfig(); const after = function(s) { return s === 0 ? "never" : (s / 60) + " min" }
+            items.push({label: "Screensaver", value: {clock: "Clock", aurora: "Aurora (animated)", stars: "Stars (animated)"}[sv.mode] || sv.mode, action: "savermode", mode: sv.mode})
+            items.push({label: "Screensaver after", value: after(sv.saverSecs), action: "saverafter", secs: sv.saverSecs, off: sv.offSecs})
+            items.push({label: "Display off after", value: after(sv.offSecs), action: "offafter", secs: sv.saverSecs, off: sv.offSecs})
+            items.push({label: "Preview screensaver", value: "any key ends it", action: "preview"})
         } else if (section === 2) {
             const s = system.sinks()
             if (s.length === 0) items.push({label: "No audio outputs found", value: ""})
@@ -54,6 +59,10 @@ Rectangle {
         else if (it.action === "join") { if (it.security) { joinSsid = it.ssid; joinPass.text = ""; joinPanel.visible = true; joinPass.inputItem.forceActiveFocus() } else system.wifiJoin(it.ssid, "") }
         else if (it.action === "mode") { if (it.mode === it.previous) return; if (system.setMode(it.output, it.mode)) { pendingMode = {output: it.output, mode: it.mode, previous: it.previous}; revertLeft = 10; revertTimer.start(); message = "Keeping this mode? Enter to keep, reverting in 10 s" } else { pendingMode = null; message = "Could not set " + it.label.trim() } }
         else if (it.action === "sink") { system.setDefaultSink(it.id); reload() }
+        else if (it.action === "savermode") { const m = ["clock", "aurora", "stars"]; system.setSaverMode(m[(m.indexOf(it.mode) + 1) % m.length]); reload() }
+        else if (it.action === "saverafter") { const c = [300, 600, 1800, 0]; system.setIdle(c[(c.indexOf(it.secs) + 1) % c.length], it.off); reload() }
+        else if (it.action === "offafter") { const c = [1800, 3600, 0]; system.setIdle(it.secs, c[(c.indexOf(it.off) + 1) % c.length]); reload() }
+        else if (it.action === "preview") system.previewSaver()
         else if (it.action === "check") system.updateCheck()
         else if (it.action === "apply") system.updateApply()
         else if (it.action === "rollback") system.rollback()

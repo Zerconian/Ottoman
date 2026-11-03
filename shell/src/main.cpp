@@ -16,6 +16,9 @@ int main(int argc, char *argv[]) {
     app.setDesktopFileName(app.applicationName());
     if (saver) {
         QQmlApplicationEngine saverEngine;
+        QString mode = QStringLiteral("clock");   // --mode=clock|aurora|stars from saver.sh (Settings > Display)
+        for (const QString &arg : app.arguments()) if (arg.startsWith(QStringLiteral("--mode="))) mode = arg.mid(7);
+        saverEngine.rootContext()->setContextProperty(QStringLiteral("saverMode"), mode);
         saverEngine.loadFromModule("Ottoman", "Saver");
         return saverEngine.rootObjects().isEmpty() ? 1 : app.exec();
     }

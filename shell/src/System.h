@@ -34,6 +34,11 @@ public:
     Q_INVOKABLE void log(const QString &line) const;
     Q_INVOKABLE bool firstRunDone() const;
     Q_INVOKABLE void setLocale(const QString &lang) const;   // sudo localectl (allowlisted)
+    // screensaver (Settings > Display): mode in ~/.config/ottoman/saver.conf, timings in idle.conf (read by saver.sh / idle.sh)
+    Q_INVOKABLE QVariantMap saverConfig() const;                // {mode, saverSecs, offSecs}
+    Q_INVOKABLE void setSaverMode(const QString &mode) const;
+    Q_INVOKABLE void setIdle(int saverSecs, int offSecs) const; // 0 = never; restarts swayidle
+    Q_INVOKABLE void previewSaver() const;
     Q_INVOKABLE void markFirstRunDone() const;                 // UI state to the journal, for driving tests                          // {hostname, uptime, diskFree, diskTotal, kernel}
 signals:
     void busyChanged();
