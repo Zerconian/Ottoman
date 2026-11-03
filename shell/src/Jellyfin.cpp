@@ -29,6 +29,9 @@ Jellyfin::Jellyfin(QObject *parent) : QObject(parent) {
     });
     m_refresh.setInterval(60000);
     connect(&m_refresh, &QTimer::timeout, this, &Jellyfin::refresh);
+    // The shell starts before the network is up; a failed refresh retries quickly instead of waiting a minute.
+    m_retry.setSingleShot(true);
+    connect(&m_retry, &QTimer::timeout, this, &Jellyfin::refresh);
     if (!m_token.isEmpty()) { setState("connected"); refresh(); m_refresh.start(); }
 }
 
@@ -131,6 +134,8 @@ void Jellyfin::refresh() {
     };
     request("GET", "/Users/" + m_userId + "/Items/Resume?Limit=12&MediaTypes=Video&Fields=ParentThumbItemId", {}, [this, toItem](int st, const QJsonDocument &d) {
         if (st == 401) { setState("error", "Session expired, sign in again"); m_token.clear(); save(); return; }
+        if (st != 200) { const int delay = qMin(30000, 2000 * (1 << qMin(m_retries++, 4))); qInfo() << "jellyfin: refresh failed, retry in" << delay << "ms"; m_retry.start(delay); return; }
+        m_retries = 0;
         QList<MediaItem> items;
         for (const QJsonValue &v : d.object().value("Items").toArray()) items << toItem(v.toObject());
         request("GET", "/Shows/NextUp?UserId=" + m_userId + "&Limit=12&Fields=ParentThumbItemId", {}, [this, toItem, items](int st2, const QJsonDocument &d2) mutable {

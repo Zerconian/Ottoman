@@ -50,6 +50,7 @@ private:
     void playOnSession(const QString &itemId, int attempt);
     QNetworkAccessManager m_net;
     QString m_url, m_token, m_userId, m_userName, m_deviceId, m_state = "disconnected", m_error, m_qcCode, m_qcSecret;
-    QTimer m_qcPoll, m_refresh;
+    QTimer m_qcPoll, m_refresh, m_retry;
+    int m_retries = 0;
     ItemModel m_continue, m_latest;
 };

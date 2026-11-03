@@ -9,8 +9,10 @@ Window {
     property int rowIndex: 0            // 0 apps, 1 continue, 2 latest
     function rows() { return [appsRow, contRow, latestRow] }
     function focusRow(i) {
-        const r = rows(); i = Math.max(0, Math.min(r.length - 1, i))
-        if (r[i].count === 0 && i !== 0) return
+        const r = rows(); const dir = i >= rowIndex ? 1 : -1
+        i = Math.max(0, Math.min(r.length - 1, i))
+        while (i > 0 && i < r.length && r[i].count === 0) i += dir      // skip empty rows in the direction of travel
+        if (i < 0 || i >= r.length || (i > 0 && r[i].count === 0)) return
         if (r[i].currentIndex < 0) r[i].currentIndex = 0      // a model swap leaves no current item: Enter would act on nothing
         rowIndex = i; r[i].forceActiveFocus()
     }
