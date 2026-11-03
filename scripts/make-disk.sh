@@ -7,6 +7,10 @@ cd "$(dirname "$0")/.."
 echo "pwd: $(pwd)  branch: $(git rev-parse --abbrev-ref HEAD)  head: $(git rev-parse --short HEAD)"
 IMG=${1:-localhost/ottoman:dev}
 OUT=${2:-$(pwd)/build/disk}
+# The installed system keeps the image NAME it was built from as its update reference. A disk built from
+# localhost/ottoman:dev can never update (found 2026-11-03). Build from the registry name instead: the dev
+# registry on the build host's LAN address, reachable from QEMU user networking and from the Tiny alike.
+IMAGE_REF=${IMAGE_REF:-<build-host>:18821/ottoman:dev}
 TYPE=${TYPE:-qcow2}            # qcow2 | anaconda-iso | raw
 CONFIG=${CONFIG:-image/bib-config.dev.toml}   # CONFIG= (empty) for a clean disk
 ROOTFS=${ROOTFS:-xfs}
@@ -20,7 +24,9 @@ if [ "$(podman image inspect "$IMG" --format '{{.Id}}' 2>/dev/null)" != "$SRC_ID
   echo "copying $IMG ($SRC_ID) from $SRC_USER's rootless store"
   sudo -u "$SRC_USER" podman save "$IMG" | podman load >/dev/null
 fi
-echo "building from image id $(podman image inspect "$IMG" --format '{{.Id}}' | cut -c1-12)"
+podman tag "$IMG" "$IMAGE_REF"
+IMG=$IMAGE_REF
+echo "building from image id $(podman image inspect "$IMG" --format '{{.Id}}' | cut -c1-12) as $IMG"
 CFG_ARGS=(); if [ -n "$CONFIG" ]; then CFG_ARGS=(-v "$(realpath "$CONFIG")":/config.toml:ro); echo "customizations: $CONFIG"; fi
 podman run --rm --privileged --pull=newer \
   --security-opt label=type:unconfined_t \
