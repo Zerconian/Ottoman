@@ -36,6 +36,10 @@ Rectangle {
         function onBusyChanged() { if (system.busyText.length) message = system.busyText + "..." }
     }
     // Step 2: install the default apps one by one with visible status, then the launcher (zerc, 2026-11-03).
+    // Step 0 (zerc, 2026-11-03): language first, English (US) preselected, applied system-wide for the apps.
+    property bool languageDone: false
+    property var languages: [["en_US.UTF-8", "English (US)"], ["en_GB.UTF-8", "English (UK)"], ["de_DE.UTF-8", "Deutsch"], ["es_ES.UTF-8", "Español"], ["fr_FR.UTF-8", "Français"], ["it_IT.UTF-8", "Italiano"], ["nl_NL.UTF-8", "Nederlands"], ["pt_BR.UTF-8", "Português (Brasil)"], ["pl_PL.UTF-8", "Polski"], ["sv_SE.UTF-8", "Svenska"], ["ja_JP.UTF-8", "日本語"]]
+    function chooseLanguage(i) { const l = languages[i]; system.log("firstrun language " + l[0]); if (l[0] !== "en_US.UTF-8") system.setLocale(l[0]); languageDone = true; refresh(); list.forceActiveFocus() }
     property bool setup: false
     property var setupRows: []
     property int setupFailed: -1
@@ -49,13 +53,17 @@ Rectangle {
         function onSetupProgress(name, state) { setRow(name, state) }
         function onSetupDone(failed) { setupFailed = failed; prefetchFinished = true; prefetching = false; system.log("firstrun setup done, failed " + failed); if (!page.setup) { message = failed === 0 ? "Default apps are ready." : failed + " app(s) failed to install, Continue shows which."; return } if (failed === 0) { system.markFirstRunDone(); done() } else { setupList.items = setupRows.concat([{label: "Retry the failed ones", value: "", action: "retry"}, {label: "Continue anyway", value: "", action: "finish"}]); setupList.currentIndex = setupList.items.length - 2 } }
     }
-    Component.onCompleted: { refresh(); if (visible) list.forceActiveFocus() }     // initial visible=true never fires onVisibleChanged
-    onVisibleChanged: if (visible) { refresh(); list.forceActiveFocus() }
+    Component.onCompleted: { refresh(); if (visible) langList.forceActiveFocus() }     // initial visible=true never fires onVisibleChanged
+    onVisibleChanged: if (visible) { refresh(); (languageDone ? list : langList).forceActiveFocus() }
     Text { text: page.setup ? "Setting up Ottoman" : "Welcome to Ottoman"; color: "#f2f2f2"; font.pixelSize: 44; font.bold: true; anchors { left: parent.left; top: parent.top; margins: 48 } }
-    Text { text: page.setup ? "Installing the default apps from Flathub. This happens once." : "Connect this box to your network. Everything else lives in Settings."; color: "#8a8f98"; font.pixelSize: 22; anchors { left: parent.left; top: parent.top; leftMargin: 48; topMargin: 118 } }
+    Text { text: page.setup ? "Installing the default apps from Flathub. This happens once." : (page.languageDone ? "Connect this box to your network. Everything else lives in Settings." : "Choose your language."); color: "#8a8f98"; font.pixelSize: 22; anchors { left: parent.left; top: parent.top; leftMargin: 48; topMargin: 118 } }
+    OptionList { id: langList; visible: !page.languageDone && !page.setup; anchors { left: parent.left; right: parent.right; top: parent.top; bottom: parent.bottom; margins: 48; topMargin: 180; bottomMargin: 110 }
+        items: page.languages.map(function(l) { return {label: l[1], value: l[0] === "en_US.UTF-8" ? "default" : ""} })
+        onActivated: function(i) { page.chooseLanguage(i) }
+        onCurrentIndexChanged: if (activeFocus) system.log("firstrun language option " + currentIndex) }
     OptionList { id: setupList; visible: page.setup; anchors { left: parent.left; right: parent.right; top: parent.top; bottom: parent.bottom; margins: 48; topMargin: 180; bottomMargin: 110 }
         onActivated: function(i) { const it = items[i]; if (!it || !it.action) return; if (it.action === "retry") { page.setupRows = page.setupRows.map(function(x) { return {label: x.label, value: x.value === "failed" ? "waiting" : x.value} }); items = page.setupRows; apps.installDefaults() } else if (it.action === "finish") { system.markFirstRunDone(); page.done() } } }
-    OptionList { id: list; visible: !page.setup; anchors { left: parent.left; right: parent.right; top: parent.top; bottom: parent.bottom; margins: 48; topMargin: 180; bottomMargin: 110 }
+    OptionList { id: list; visible: page.languageDone && !page.setup; anchors { left: parent.left; right: parent.right; top: parent.top; bottom: parent.bottom; margins: 48; topMargin: 180; bottomMargin: 110 }
         onActivated: function(i) { act(i) }
         onActiveFocusChanged: if (activeFocus && items[currentIndex]) system.log("firstrun focus " + currentIndex + " " + items[currentIndex].label)
         onCurrentIndexChanged: if (activeFocus && items[currentIndex]) system.log("firstrun option " + currentIndex + " " + items[currentIndex].label) }

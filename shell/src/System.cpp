@@ -157,3 +157,8 @@ void System::log(const QString &line) const { qInfo().noquote() << "ui:" << line
 
 bool System::firstRunDone() const { return QFile::exists(cfg("firstrun-done")); }
 void System::markFirstRunDone() const { QFile f(cfg("firstrun-done")); f.open(QIODevice::WriteOnly); f.write("done\n"); qInfo() << "system: first run done"; }
+
+void System::setLocale(const QString &lang) const {
+    bool ok; run("sudo", {"-n", "/usr/bin/localectl", "set-locale", "LANG=" + lang}, 10000, &ok);
+    qInfo().noquote() << "system: set-locale" << lang << (ok ? "ok" : "FAILED");
+}
