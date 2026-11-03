@@ -6,5 +6,6 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 SSH=./scripts/vm-ssh.sh
 cursor=$($SSH 'sudo journalctl -b --no-pager -o short-monotonic _COMM=ottoman-shell 2>/dev/null | wc -l')
-if [ "${1:-}" != "--state" ]; then ./scripts/vm-type.sh "" "$@"; sleep "${UI_WAIT:-1.2}"; fi
+# --state: show the last few lines unconditionally (it used to show only lines newer than its own start, i.e. nothing).
+if [ "${1:-}" = "--state" ]; then cursor=$((cursor - 8)); [ $cursor -lt 0 ] && cursor=0; else ./scripts/vm-type.sh "" "$@"; sleep "${UI_WAIT:-1.2}"; fi
 $SSH "sudo journalctl -b --no-pager -o short-monotonic _COMM=ottoman-shell 2>/dev/null | tail -n +$((cursor + 1)) | command grep -E 'ui:|system:|jellyfin:' | sed -e 's/^.*ottoman-shell\[[0-9]*\]: //' | tail -8"
