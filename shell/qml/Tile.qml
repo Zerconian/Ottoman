@@ -23,8 +23,8 @@ Rectangle {
             anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 22 }
             Text { anchors.centerIn: parent; text: tile.monogram; color: "#ffffff"; font.pixelSize: 44; font.bold: true } }
     property bool hasArt: tile.iconUrl.length > 0 || tile.monogram.length > 0
-    Text { anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter; verticalCenterOffset: tile.hasArt ? 52 : 0 }
+    Text { anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter; verticalCenterOffset: tile.hasArt ? (tile.note.length ? 38 : 52) : 0 }
            text: (tile.isAdd ? "+  " : "") + tile.label; color: tile.isAdd ? "#8a8f98" : (installed ? "#f2f2f2" : "#777"); font.pixelSize: tile.isAdd ? 26 : (tile.hasArt ? 22 : 34); font.bold: !tile.isAdd }
-    Text { visible: tile.note.length > 0 && tile.installed; text: tile.note; color: "#aab0ba"; font.pixelSize: 13; anchors { left: parent.left; bottom: parent.bottom; margins: 10 } }
+    Text { visible: tile.note.length > 0 && tile.installed; text: tile.note; color: "#aab0ba"; font.pixelSize: 12; anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 8 } }
     Rectangle { visible: running; width: 14; height: 14; radius: 7; color: "#3ddc84"; anchors { right: parent.right; bottom: parent.bottom; margins: 14 } }
 }
