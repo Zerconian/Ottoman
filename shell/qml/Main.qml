@@ -54,7 +54,7 @@ Window {
                 ListView {
                     id: appsRow; width: win.width - 48; height: 190; orientation: ListView.Horizontal; spacing: 24; clip: true
                     model: apps; focus: true; highlightMoveDuration: 0; preferredHighlightBegin: 0; preferredHighlightEnd: width - 60; highlightRangeMode: ListView.ApplyRange
-                    delegate: Tile { label: model.name; tint: model.color; installed: model.installed; running: model.running; isAdd: model.isAdd; current: ListView.isCurrentItem
+                    delegate: Tile { label: model.name; tint: model.color; installed: model.installed; running: model.running; isAdd: model.isAdd; note: model.note; current: ListView.isCurrentItem
                         MouseArea { anchors.fill: parent; onClicked: { appsRow.currentIndex = index; appsRow.activate() } } }
                     function activate() { if (apps.isAddRow(currentIndex)) addApp.open(); else apps.launch(currentIndex) }
                     function openMenu(held) { if (!apps.isAddRow(currentIndex)) tileMenu.open(currentIndex, apps.data(apps.index(currentIndex, 0), 257), held) }

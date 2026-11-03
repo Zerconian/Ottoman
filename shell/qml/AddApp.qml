@@ -10,9 +10,9 @@ Rectangle {
     function build() {
         const items = []
         for (const a of apps.catalogue()) {
-            if (a.installed && !a.hidden) items.push({label: a.name, value: "installed", action: ""})
+            if (a.installed && !a.hidden) items.push({label: a.name, value: "installed" + (a.note ? ", " + a.note : ""), action: ""})
             else if (a.installed && a.hidden) items.push({label: a.name, value: "hidden, Enter shows it", action: "unhide", id: a.flatpakId})
-            else items.push({label: a.name, value: "Enter installs from Flathub", action: "install", id: a.flatpakId})
+            else items.push({label: a.name, value: (a.note ? a.note + ", " : "") + "Enter installs from Flathub", action: "install", id: a.flatpakId})
         }
         list.items = items
     }

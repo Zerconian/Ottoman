@@ -5,13 +5,13 @@
 #include "Sway.h"
 // The APPS row (DESIGN.md 4.10 #6): the TV-ready catalogue filtered to installed-and-not-hidden apps in the
 // user's saved order, plus an "Add app" tile at the end. Order and hidden set live in ~/.config/ottoman/apps.conf.
-struct AppEntry { QString name, flatpakId, appId, color; QStringList args; QStringList overrides; bool installed = false; bool running = false; bool hidden = false; };
+struct AppEntry { QString name, flatpakId, appId, color; QStringList args; QStringList overrides; QString webUrl; QString note; bool installed = false; bool running = false; bool hidden = false; };
 class AppModel : public QAbstractListModel {
     Q_OBJECT
     Q_PROPERTY(int installedCount READ installedCount NOTIFY changed)
     Q_PROPERTY(QString busyText READ busyText NOTIFY changed)
 public:
-    enum Roles { Name = Qt::UserRole + 1, FlatpakId, AppId, Color, Installed, Running, IsAdd };
+    enum Roles { Name = Qt::UserRole + 1, FlatpakId, AppId, Color, Installed, Running, IsAdd, Note };
     explicit AppModel(Sway *sway, QObject *parent = nullptr);
     int rowCount(const QModelIndex & = {}) const override { return m_rows.size() + 1; }   // + Add tile
     QVariant data(const QModelIndex &idx, int role) const override;

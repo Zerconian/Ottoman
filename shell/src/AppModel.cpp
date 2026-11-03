@@ -3,6 +3,7 @@
 #include <QStandardPaths>
 #include <QDir>
 #include <QDebug>
+#include <QRegularExpression>
 
 static QString appsConf() { const QString d = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/ottoman"; QDir().mkpath(d); return d + "/apps.conf"; }
 
@@ -17,6 +18,10 @@ AppModel::AppModel(Sway *sway, QObject *parent) : QAbstractListModel(parent), m_
         {"RetroArch", "org.libretro.RetroArch",        "org.libretro.RetroArch",        "#6f42c1"},
         {"Steam Link","com.valvesoftware.SteamLink",   "com.valvesoftware.SteamLink",   "#1b2838"},
         {"Moonlight", "com.moonlight_stream.Moonlight","com.moonlight_stream.Moonlight","#2d7a3e"},
+        // Streaming sites run through webapp.sh in Firefox kiosk (DESIGN.md 4.5). Same Flatpak, own profile each.
+        {"Netflix",   "org.mozilla.firefox", "org.mozilla.firefox", "#b1060f", {}, {}, "https://www.netflix.com/browse", "up to 1080p (Widevine L3)"},
+        {"Disney+",   "org.mozilla.firefox", "org.mozilla.firefox", "#0a3d91", {}, {}, "https://www.disneyplus.com/home", "up to 1080p (Widevine L3)"},
+        {"Max",       "org.mozilla.firefox", "org.mozilla.firefox", "#5b2ccd", {}, {}, "https://play.max.com", "up to 1080p (Widevine L3)"},
     };
     load();
     refresh();
@@ -45,19 +50,19 @@ void AppModel::rebuildRows() {
 QVariant AppModel::data(const QModelIndex &idx, int role) const {
     if (!idx.isValid()) return {};
     if (idx.row() == m_rows.size()) {   // Add tile
-        switch (role) { case Name: return m_busy.isEmpty() ? QStringLiteral("Add app") : m_busy; case Color: return "#2a2f38"; case Installed: return true; case Running: return false; case IsAdd: return true; }
+        switch (role) { case Name: return m_busy.isEmpty() ? QStringLiteral("Add app") : m_busy; case Color: return "#2a2f38"; case Installed: return true; case Running: return false; case IsAdd: return true; case Note: return QString(); }
         return {};
     }
     if (idx.row() > m_rows.size()) return {};
     const AppEntry &a = m_apps[m_rows[idx.row()]];
     switch (role) {
     case Name: return a.name; case FlatpakId: return a.flatpakId; case AppId: return a.appId;
-    case Color: return a.color; case Installed: return a.installed; case Running: return a.running; case IsAdd: return false;
+    case Color: return a.color; case Installed: return a.installed; case Running: return a.running; case IsAdd: return false; case Note: return a.note;
     }
     return {};
 }
 QHash<int, QByteArray> AppModel::roleNames() const {
-    return {{Name,"name"},{FlatpakId,"flatpakId"},{AppId,"appId"},{Color,"color"},{Installed,"installed"},{Running,"running"},{IsAdd,"isAdd"}};
+    return {{Name,"name"},{FlatpakId,"flatpakId"},{AppId,"appId"},{Color,"color"},{Installed,"installed"},{Running,"running"},{IsAdd,"isAdd"},{Note,"note"}};
 }
 int AppModel::installedCount() const { int n = 0; for (const auto &a : m_apps) n += a.installed; return n; }
 
@@ -65,7 +70,8 @@ void AppModel::launch(int row) {
     if (row < 0 || row >= m_rows.size()) return;
     AppEntry &a = m_apps[m_rows[row]];
     if (a.running) { qInfo() << "resume" << a.appId; m_sway->showApp(a.appId); return; }
-    qInfo() << "launch" << a.flatpakId;
+    qInfo() << "launch" << a.name << a.flatpakId;
+    if (!a.webUrl.isEmpty()) { QProcess::startDetached(QStringLiteral("/usr/libexec/ottoman/webapp.sh"), {a.name.toLower().remove(QRegularExpression("[^a-z0-9]")), a.webUrl}); return; }
     QProcess::startDetached(QStringLiteral("flatpak"), QStringList{QStringLiteral("--user"), QStringLiteral("run"), a.flatpakId} + a.args);
 }
 void AppModel::launchFlatpak(const QString &flatpakId) {
@@ -110,7 +116,7 @@ void AppModel::unhide(const QString &flatpakId) {
 }
 QVariantList AppModel::catalogue() const {
     QVariantList l;
-    for (const AppEntry &a : m_apps) l << QVariantMap{{"name", a.name}, {"flatpakId", a.flatpakId}, {"installed", a.installed}, {"hidden", a.hidden}};
+    for (const AppEntry &a : m_apps) l << QVariantMap{{"name", a.name}, {"flatpakId", a.flatpakId}, {"installed", a.installed}, {"hidden", a.hidden}, {"note", a.note}};
     return l;
 }
 void AppModel::runFlatpak(const QString &label, const QStringList &args, const QString &flatpakId) {
