@@ -96,7 +96,9 @@ Window {
     }
     onRowIndexChanged: page.contentY = rowIndex === 0 ? 0 : rowIndex === 1 ? 240 : 520
     // Row models swap when Jellyfin connects or signs out, which drops keyboard focus: re-focus the current row.
-    Connections { target: jellyfin; function onChanged() { if (!signIn.visible) Qt.callLater(function() { focusRow(rowIndex) }) } }
+    // Re-focus the home rows after a Jellyfin state change, but never steal focus from an open overlay
+    // (signing out from Settings > About used to drop focus behind the Settings page).
+    Connections { target: jellyfin; function onChanged() { if (!signIn.visible && !settings.visible && !osk.visible) Qt.callLater(function() { focusRow(rowIndex) }) } }
     ListModel { id: signInModel; ListElement { name: "Sign in to Jellyfin"; subtitle: "Enter to connect your server"; imageUrl: ""; progress: 0 } }
     SignIn { id: signIn; visible: false; z: 50; onVisibleChanged: { if (!visible) focusRow(rowIndex); system.log("signin " + (visible ? "open" : "close")) } onDone: visible = false }
     Settings { id: settings; visible: false; z: 50; onDone: { visible = false; focusRow(rowIndex) } }
