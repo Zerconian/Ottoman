@@ -154,3 +154,6 @@ QVariantMap System::about() const {
 }
 
 void System::log(const QString &line) const { qInfo().noquote() << "ui:" << line; }
+
+bool System::firstRunDone() const { return QFile::exists(cfg("firstrun-done")); }
+void System::markFirstRunDone() const { QFile f(cfg("firstrun-done")); f.open(QIODevice::WriteOnly); f.write("done\n"); qInfo() << "system: first run done"; }

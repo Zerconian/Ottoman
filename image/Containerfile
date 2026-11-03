@@ -22,7 +22,7 @@ RUN dnf -y install \
 # Graphics + media: both Intel VA-API drivers on purpose. iHD (intel-media-driver) is Broadwell+;
 # the floor-tier Haswell box (HD 4400) needs the legacy i965 driver (libva-intel-driver).
 RUN dnf -y install \
-      sway foot \
+      sway swayidle foot \
       qt6-qtdeclarative qt6-qtwayland qt6-qtsvg \
       mesa-dri-drivers mesa-vulkan-drivers libva-intel-driver intel-media-driver libva-utils \
       pipewire pipewire-alsa pipewire-pulseaudio wireplumber \

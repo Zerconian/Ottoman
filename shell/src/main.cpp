@@ -8,8 +8,15 @@
 #include "System.h"
 int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
-    app.setApplicationName(QStringLiteral("ottoman-shell"));      // becomes the Wayland app_id sway matches on
-    app.setDesktopFileName(QStringLiteral("ottoman-shell"));
+    const bool saver = app.arguments().contains(QStringLiteral("--saver"));
+    // The application name becomes the Wayland app_id sway matches on: ottoman-shell, or ottoman-saver for the screensaver.
+    app.setApplicationName(saver ? QStringLiteral("ottoman-saver") : QStringLiteral("ottoman-shell"));
+    app.setDesktopFileName(app.applicationName());
+    if (saver) {
+        QQmlApplicationEngine saverEngine;
+        saverEngine.loadFromModule("Ottoman", "Saver");
+        return saverEngine.rootObjects().isEmpty() ? 1 : app.exec();
+    }
     Sway sway;
     AppModel apps(&sway);
     Jellyfin jellyfin;
