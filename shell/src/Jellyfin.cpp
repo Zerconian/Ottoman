@@ -14,7 +14,7 @@ static QString settingsPath() {
     return dir + "/jellyfin.conf";
 }
 
-Jellyfin::Jellyfin(QObject *parent) : QObject(parent) {
+Jellyfin::Jellyfin(Sway *sway, QObject *parent) : QObject(parent), m_sway(sway) {
     load();
     if (m_deviceId.isEmpty()) { m_deviceId = QUuid::createUuid().toString(QUuid::WithoutBraces); save(); }
     connect(&m_qcPoll, &QTimer::timeout, this, [this] {
@@ -32,7 +32,11 @@ Jellyfin::Jellyfin(QObject *parent) : QObject(parent) {
     // The shell starts before the network is up; a failed refresh retries quickly instead of waiting a minute.
     m_retry.setSingleShot(true);
     connect(&m_retry, &QTimer::timeout, this, &Jellyfin::refresh);
-    if (!m_token.isEmpty()) { qInfo().noquote() << "jellyfin: stored session for" << m_userName << "at" << m_url << ", refreshing"; setState("connected"); refresh(); m_refresh.start(); }
+    // Playback-aware idle inhibit (DESIGN.md 4.10 #7): Jellyfin Desktop sets no Wayland idle inhibitor while
+    // playing (measured 2026-11-03), so the shell asks the server every 10 s and marks the window itself.
+    m_playPoll.setInterval(10000);
+    connect(&m_playPoll, &QTimer::timeout, this, &Jellyfin::pollPlayback);
+    if (!m_token.isEmpty()) { qInfo().noquote() << "jellyfin: stored session for" << m_userName << "at" << m_url << ", refreshing"; setState("connected"); refresh(); m_refresh.start(); m_playPoll.start(); }
 }
 
 QByteArray Jellyfin::authHeader() const {
@@ -108,11 +112,11 @@ void Jellyfin::finishSignIn(const QJsonDocument &d) {
     m_userName = o.value("User").toObject().value("Name").toString();
     m_qcCode.clear(); save();
     qInfo().noquote() << "jellyfin: signed in as" << m_userName << "at" << m_url;
-    setState("connected"); refresh(); m_refresh.start();
+    setState("connected"); refresh(); m_refresh.start(); m_playPoll.start();
 }
 
 void Jellyfin::signOut() {
-    m_refresh.stop(); m_qcPoll.stop(); m_token.clear(); m_userId.clear(); m_userName.clear(); save();
+    m_refresh.stop(); m_qcPoll.stop(); m_playPoll.stop(); m_token.clear(); m_userId.clear(); m_userName.clear(); save();
     m_continue.reset({}); m_latest.reset({}); setState("disconnected");
 }
 
@@ -178,6 +182,24 @@ void Jellyfin::playOnSession(const QString &itemId, int attempt) {
         request("POST", "/Sessions/" + best + "/Playing?playCommand=PlayNow&itemIds=" + itemId, {}, [this, itemId](int st2, const QJsonDocument &) {
             qInfo().noquote() << "jellyfin: PlayNow" << itemId << "->" << st2;
             emit played(itemId, st2 == 204 || st2 == 200);
+            QTimer::singleShot(2000, this, &Jellyfin::pollPlayback);
         });
+    });
+}
+
+void Jellyfin::pollPlayback() {
+    if (m_token.isEmpty()) return;
+    request("GET", "/Sessions", {}, [this](int st, const QJsonDocument &d) {
+        if (st != 200) return;
+        bool playing = false;
+        for (const QJsonValue &v : d.array()) {
+            const QJsonObject s = v.toObject();
+            if (s.value("Client").toString().contains("Ottoman")) continue;
+            if (s.value("NowPlayingItem").isObject() && !s.value("PlayState").toObject().value("IsPaused").toBool()) playing = true;
+        }
+        if (playing == m_playing) return;
+        m_playing = playing;
+        qInfo() << "jellyfin: playback" << (playing ? "started: inhibit idle on the Jellyfin window" : "stopped: idle inhibit released");
+        m_sway->command(QStringLiteral("[app_id=\"org.jellyfin.JellyfinDesktop\"] inhibit_idle %1").arg(playing ? "visible" : "none"));
     });
 }

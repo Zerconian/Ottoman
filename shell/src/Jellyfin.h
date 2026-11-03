@@ -8,6 +8,7 @@
 #include <QTimer>
 #include <functional>
 #include "ItemModel.h"
+#include "Sway.h"
 // Jellyfin adapter for the content rows (DESIGN.md 4.10 #5): sign in once, keep a token, fill
 // Continue watching (Resume + NextUp) and Recently added (Latest), deep-link by remote-controlling the
 // Jellyfin Desktop session. Jellyfin 12 needs the `Authorization: MediaBrowser ...` header; the legacy
@@ -22,7 +23,7 @@ class Jellyfin : public QObject {
     Q_PROPERTY(ItemModel *continueModel READ continueModel CONSTANT)
     Q_PROPERTY(ItemModel *latestModel READ latestModel CONSTANT)
 public:
-    explicit Jellyfin(QObject *parent = nullptr);
+    explicit Jellyfin(Sway *sway, QObject *parent = nullptr);
     QString serverUrl() const { return m_url; }
     QString userName() const { return m_userName; }
     QString state() const { return m_state; }
@@ -50,7 +51,10 @@ private:
     void playOnSession(const QString &itemId, int attempt);
     QNetworkAccessManager m_net;
     QString m_url, m_token, m_userId, m_userName, m_deviceId, m_state = "disconnected", m_error, m_qcCode, m_qcSecret;
-    QTimer m_qcPoll, m_refresh, m_retry;
+    QTimer m_qcPoll, m_refresh, m_retry, m_playPoll;
+    Sway *m_sway;
+    bool m_playing = false;
+    void pollPlayback();
     int m_retries = 0;
     ItemModel m_continue, m_latest;
 };
