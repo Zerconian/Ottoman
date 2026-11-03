@@ -40,7 +40,7 @@ Rectangle {
             items.push({label: "Restart now", value: "", action: "reboot"})
         } else {
             const a = system.about()
-            items.push({label: "Name", value: a.hostname}); items.push({label: "Kernel", value: a.kernel})
+            items.push({label: "Name", value: a.hostname}); items.push({label: "Build", value: a.build}); items.push({label: "Kernel", value: a.kernel})
             items.push({label: "Up for", value: a.uptime}); items.push({label: "Storage free", value: a.diskFree + " of " + a.diskTotal})
             items.push({label: "Jellyfin", value: jellyfin.state === "connected" ? jellyfin.userName + " at " + jellyfin.serverUrl : "not signed in", action: jellyfin.state === "connected" ? "signout" : ""})
         }

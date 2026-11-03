@@ -148,7 +148,9 @@ QVariantMap System::about() const {
     QFile up("/proc/uptime"); up.open(QIODevice::ReadOnly);
     const int secs = QString::fromUtf8(up.readAll()).section(' ', 0, 0).toDouble();
     QFile kv("/proc/sys/kernel/osrelease"); kv.open(QIODevice::ReadOnly);
-    return {{"hostname", QHostInfo::localHostName()}, {"uptime", QStringLiteral("%1 h %2 min").arg(secs / 3600).arg((secs % 3600) / 60)},
+    QFile bi("/usr/share/ottoman/build-info"); bi.open(QIODevice::ReadOnly);   // commit=..., built=... (image/Containerfile)
+    QString build; for (const QString &l : QString::fromUtf8(bi.readAll()).split('\n')) { if (l.startsWith("commit=")) build = l.mid(7); else if (l.startsWith("built=")) build += " (" + l.mid(6) + ")"; }
+    return {{"hostname", QHostInfo::localHostName()}, {"build", build.isEmpty() ? QStringLiteral("unknown") : build}, {"uptime", QStringLiteral("%1 h %2 min").arg(secs / 3600).arg((secs % 3600) / 60)},
             {"diskFree", QString::number(st.bytesAvailable() / (1024.0 * 1024 * 1024), 'f', 1) + " GB"}, {"diskTotal", QString::number(st.bytesTotal() / (1024.0 * 1024 * 1024), 'f', 1) + " GB"},
             {"kernel", QString::fromUtf8(kv.readAll()).trimmed()}};
 }

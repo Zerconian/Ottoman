@@ -11,6 +11,7 @@ FROM quay.io/fedora/fedora-bootc:44
 # DEV=1 (scripts/build-image.sh default) marks the build host's dev registry insecure so dev installs can pull updates.
 # It lives in /etc inside the image, so every dev image carries it across upgrades and a release image drops it.
 ARG DEV=0
+ARG GIT_SHA=unknown
 
 # RPM Fusion: Fedora proper ships no Intel VA-API drivers and strips H.264/HEVC from mesa's VA-API.
 # i965 (libva-intel-driver) is in rpmfusion-free, iHD (intel-media-driver) in rpmfusion-nonfree,
@@ -72,6 +73,8 @@ RUN if [ "$DEV" = 1 ]; then mkdir -p /etc/containers/registries.conf.d && printf
     && printf 'zerc ALL=(ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/50-ottoman-dev && chmod 0440 /etc/sudoers.d/50-ottoman-dev; fi
 # (the dev login user itself comes from bib: image/bib-config.dev*.toml; bib's ISO path ignores customizations.files AND
 #  installer.sudo-nopasswd, measured 2026-11-03, so the sudo rule lives in the DEV image too)
+# Build identity for About and for update checks: every build differs, so every push is a real update.
+RUN mkdir -p /usr/share/ottoman && printf 'commit=%s\nbuilt=%s\n' "$GIT_SHA" "$(date -u +%Y-%m-%dT%H:%MZ)" > /usr/share/ottoman/build-info
 # Boot never waits on the network (zerc, 2026-11-03): NetworkManager-wait-online is off; nothing of ours is ordered
 # after network-online.target, and every wait Ottoman adds (first-boot Flatpak install 60 s, greenboot check 90 s) is bounded.
 # bootc's own lint: no content in /var, no world-writable surprises.
