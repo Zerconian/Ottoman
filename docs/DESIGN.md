@@ -240,7 +240,7 @@ the result. Build: `scripts/build-image.sh`, logs in `~/.local/share/claude-scra
 | M0 | this doc signed off | zerc's answers recorded |
 | M1 | bootc image boots to cage + Jellyfin Media Player on a VM and the Lenovo Tiny | boot time, idle RAM, 1080p H.264 direct-play measured on the Tiny. **VM half DONE 2026-11-02 23:4x:** QEMU boots to the cage kiosk with Jellyfin Desktop 2.0.0 on screen (screendump), session active with 0 restarts, 6.7 s to multi-user, 763 MB used with the app running, 38 running units; first boot installed app + runtimes from Flathub in 41 s; `bootc switch` from the local registry worked and left the previous deployment as rollback. **Tiny half pending** (ISO + real hardware) |
 | M2 | QML launcher: app grid, launch/exit Flatpaks, back-to-home | remote-only walkthrough, no keyboard |
-| M3 | inputd: CEC, IR, BT, phone remote | each path drives the M2 walkthrough |
+| M3 | inputd: CEC, IR, BT, phone remote | each path drives the M2 walkthrough. **M3.0 DONE 2026-11-03 18:5x UTC:** `ottoman-inputd` (python3-evdev, system service) serves the phone remote page on :18820 and injects keys through a uinput keyboard; from the host via the VM forward, home/down/up moved the shell's focus rows, a held OK on the Jellyfin tile opened the tile menu and Back closed it (shell journal). Gamepad mapping (BTN_*/HAT -> keys) written, untested (no gamepad in the VM). CEC/IR wait for the Tiny. Trap: a test reader that printed nothing made this look broken for an hour |
 | M4 | web-app runner: YouTube TV, one Widevine site | playback + the quality cap shown |
 | M5 | first-run (Wi-Fi, display, audio), updates + rollback UX | pull a bad image, watch it roll back |
 | M6 | installer ISO, docs | fresh install on the real box from the ISO |
