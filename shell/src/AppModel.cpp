@@ -4,6 +4,7 @@
 #include <QDir>
 #include <QDebug>
 #include <QRegularExpression>
+#include <QFile>
 
 static QString appsConf() { const QString d = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/ottoman"; QDir().mkpath(d); return d + "/apps.conf"; }
 
@@ -50,7 +51,7 @@ void AppModel::rebuildRows() {
 QVariant AppModel::data(const QModelIndex &idx, int role) const {
     if (!idx.isValid()) return {};
     if (idx.row() == m_rows.size()) {   // Add tile
-        switch (role) { case Name: return m_busy.isEmpty() ? QStringLiteral("Add app") : m_busy; case Color: return "#2a2f38"; case Installed: return true; case Running: return false; case IsAdd: return true; case Note: return QString(); }
+        switch (role) { case Name: return m_busy.isEmpty() ? QStringLiteral("Add app") : m_busy; case Color: return "#2a2f38"; case Installed: return true; case Running: return false; case IsAdd: return true; case Note: return QString(); case IconUrl: return QString(); case Monogram: return QString(); }
         return {};
     }
     if (idx.row() > m_rows.size()) return {};
@@ -58,11 +59,20 @@ QVariant AppModel::data(const QModelIndex &idx, int role) const {
     switch (role) {
     case Name: return a.name; case FlatpakId: return a.flatpakId; case AppId: return a.appId;
     case Color: return a.color; case Installed: return a.installed; case Running: return a.running; case IsAdd: return false; case Note: return a.note;
+    case IconUrl: return a.webUrl.isEmpty() ? iconFor(a) : QString();      // web apps get a monogram, never a third-party mark
+    case Monogram: return a.webUrl.isEmpty() ? QString() : a.name.left(1).toUpper();
     }
     return {};
 }
+QString AppModel::iconFor(const AppEntry &a) const {
+    // Installed Flatpaks export their own icon here; showing an installed app's icon in its launcher is what the icon ships for.
+    const QString base = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/flatpak/exports/share/icons/hicolor/";
+    for (const char *dir : {"scalable/apps/", "512x512/apps/", "256x256/apps/", "128x128/apps/", "64x64/apps/"})
+        for (const char *ext : {".svg", ".png"}) { const QString f = base + dir + a.flatpakId + ext; if (QFile::exists(f)) return "file://" + f; }
+    return {};
+}
 QHash<int, QByteArray> AppModel::roleNames() const {
-    return {{Name,"name"},{FlatpakId,"flatpakId"},{AppId,"appId"},{Color,"color"},{Installed,"installed"},{Running,"running"},{IsAdd,"isAdd"},{Note,"note"}};
+    return {{Name,"name"},{FlatpakId,"flatpakId"},{AppId,"appId"},{Color,"color"},{Installed,"installed"},{Running,"running"},{IsAdd,"isAdd"},{Note,"note"},{IconUrl,"iconUrl"},{Monogram,"monogram"}};
 }
 int AppModel::installedCount() const { int n = 0; for (const auto &a : m_apps) n += a.installed; return n; }
 

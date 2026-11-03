@@ -11,7 +11,7 @@ class AppModel : public QAbstractListModel {
     Q_PROPERTY(int installedCount READ installedCount NOTIFY changed)
     Q_PROPERTY(QString busyText READ busyText NOTIFY changed)
 public:
-    enum Roles { Name = Qt::UserRole + 1, FlatpakId, AppId, Color, Installed, Running, IsAdd, Note };
+    enum Roles { Name = Qt::UserRole + 1, FlatpakId, AppId, Color, Installed, Running, IsAdd, Note, IconUrl, Monogram };
     explicit AppModel(Sway *sway, QObject *parent = nullptr);
     int rowCount(const QModelIndex & = {}) const override { return m_rows.size() + 1; }   // + Add tile
     QVariant data(const QModelIndex &idx, int role) const override;
@@ -42,6 +42,7 @@ private:
     void refreshRunning();
     void rebuildRows();
     void load(); void save();
+    QString iconFor(const AppEntry &a) const;   // file:// of the Flatpak's exported icon, or empty
     void runFlatpak(const QString &label, const QStringList &args, const QString &flatpakId);
     Sway *m_sway;
     QList<AppEntry> m_apps;      // catalogue
