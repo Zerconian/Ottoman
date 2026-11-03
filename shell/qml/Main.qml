@@ -81,7 +81,7 @@ Window {
     }
     onRowIndexChanged: page.contentY = rowIndex === 0 ? 0 : rowIndex === 1 ? 240 : 520
     ListModel { id: signInModel; ListElement { name: "Sign in to Jellyfin"; subtitle: "Enter to connect your server"; imageUrl: ""; progress: 0 } }
-    SignIn { id: signIn; visible: false; onVisibleChanged: if (visible) forceActiveFocus(); else focusRow(rowIndex); onDone: visible = false }
+    SignIn { id: signIn; visible: false; onVisibleChanged: if (!visible) focusRow(rowIndex); onDone: visible = false }
     Text {
         text: apps.installedCount === 0 ? "Installing Jellyfin from Flathub, this takes about a minute on first boot." : "Enter opens. Home returns here, apps keep running (green dot)."
         color: "#6b7079"; font.pixelSize: 18

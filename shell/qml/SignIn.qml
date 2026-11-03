@@ -5,13 +5,15 @@ Rectangle {
     signal done()
     anchors.fill: parent
     color: "#e6101214"
-    focus: true
+    // The panel itself must not take focus: typing has to land in the server field (first VM test typed into nothing).
+    function focusFirst() { server.inputItem.forceActiveFocus() }
+    onVisibleChanged: if (visible) focusFirst()
     Keys.onEscapePressed: { jellyfin.quickConnectCancel(); panel.done() }
     Connections { target: jellyfin; function onChanged() { if (jellyfin.state === "connected") panel.done() } }
     Column {
         anchors.centerIn: parent; spacing: 18
         Text { text: "Sign in to Jellyfin"; color: "#f2f2f2"; font.pixelSize: 36; font.bold: true }
-        Field { id: server; label: "Server address"; text: jellyfin.serverUrl.length ? jellyfin.serverUrl : ""; inputItem.focus: true
+        Field { id: server; label: "Server address"; text: jellyfin.serverUrl.length ? jellyfin.serverUrl : ""
                 inputItem.KeyNavigation.down: user.inputItem; inputItem.onAccepted: user.inputItem.forceActiveFocus() }
         Field { id: user; label: "User name"; inputItem.KeyNavigation.up: server.inputItem; inputItem.KeyNavigation.down: pass.inputItem; inputItem.onAccepted: pass.inputItem.forceActiveFocus() }
         Field { id: pass; label: "Password"; password: true; inputItem.KeyNavigation.up: user.inputItem; inputItem.KeyNavigation.down: qc
