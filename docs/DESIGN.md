@@ -189,8 +189,7 @@ configuration** (no bar, every window fullscreen, borders off) with the launcher
 sway IPC (`focus`, `kill`, `move scratchpad`); same wlroots stack as cage, so the hardware story is
 unchanged. (b) Write the compositor into the launcher with Qt Wayland Compositor on eglfs/KMS:
 total control, but eglfs on random mini PCs is less proven than wlroots. (c) labwc, same IPC idea
-with a smaller surface but a younger IPC. Pick: **(a) sway**, decided by measurement in M2.0 (the
-launcher must come forward over a running Jellyfin Desktop on Home, and Back must reach the app).
+with a smaller surface but a younger IPC. Pick: **(a) sway**. **M2.0 PROVEN 2026-11-03 09:4x on the VM:** sway 1.11 kiosk session active (0 restarts, 7.0 s boot), Jellyfin Desktop fullscreen (get_tree: fs=1 focused), `move scratchpad` blanks the screen with the process still alive (screendump 432 bytes = black), `scratchpad show, fullscreen enable` restores it (screendump identical to before). Rollback: cage deployment kept by bootc.
 
 **M2 build order *[proposed]*:** M2.0 session = sway kiosk + launcher process + IPC raise/lower proven
 on the VM. M2.1 home screen: header, APPS row from installed Flatpaks, launch/suspend/resume, running
