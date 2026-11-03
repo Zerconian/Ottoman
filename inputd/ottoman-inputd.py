@@ -78,11 +78,30 @@ let t;for(const b of document.querySelectorAll('button')){
  b.addEventListener('pointerleave',()=>clearTimeout(t));}
 </script></body></html>"""
 
+def sway(cmd):
+    """Run a sway command in the TV session (the daemon is root; the session belongs to the ottoman user)."""
+    import glob, subprocess
+    socks = glob.glob("/run/user/*/sway-ipc.*.sock")
+    if not socks: return False
+    import pwd, os
+    user = pwd.getpwuid(os.stat(socks[0]).st_uid).pw_name
+    r = subprocess.run(["runuser", "-u", user, "--", "env", f"SWAYSOCK={socks[0]}", "swaymsg", cmd], capture_output=True, text=True, timeout=5)
+    return r.returncode == 0
+
+def power(state):
+    """Home Assistant "power": the box never suspends (DESIGN.md 4.10 #7); off = display off + playback paused, on = display on."""
+    if state == "off": ok = sway("output * power off"); log("power off (display)"); return ok
+    if state == "on": ok = sway("output * power on"); press("home"); log("power on (display + home)"); return ok
+    return False
+
 class H(http.server.BaseHTTPRequestHandler):
     def log_message(self, *a): pass
     def do_GET(self):
         if self.path in ("/", "/index.html"):
             body = PAGE.encode(); self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
+        elif self.path == "/status":
+            body = json.dumps({"pointer": pointer["on"], "keys": sorted(KEYS), "power": ["on", "off"]}).encode(); self.send_response(200); self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
         elif self.path == "/keys":
             body = json.dumps(sorted(KEYS)).encode(); self.send_response(200); self.send_header("Content-Type", "application/json")
@@ -90,6 +109,8 @@ class H(http.server.BaseHTTPRequestHandler):
         else: self.send_error(404)
     def do_POST(self):
         u = urllib.parse.urlparse(self.path); q = urllib.parse.parse_qs(u.query)
+        if u.path == "/power" and power(q.get("state", [""])[0]):
+            self.send_response(204); self.end_headers(); return
         if u.path == "/key" and press(q.get("name", [""])[0], int(q.get("hold", ["0"])[0] or 0)):
             log(f"key {q['name'][0]} from {self.client_address[0]}" + (" (hold)" if q.get("hold") else "") + (" [pointer]" if pointer["on"] else ""))
             self.send_response(204); self.end_headers()
