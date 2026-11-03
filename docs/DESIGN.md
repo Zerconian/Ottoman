@@ -138,7 +138,7 @@ a hardware brand) or pick another.
 
 ## 6. Ports *[proposed]*
 
-Anybox block **18820-18829** (RailgunRun has 18790-18792, <private-domain> 18800-18809). 18820 phone
+Anybox block **18820-18829**. Taken nearby: 18790-18792 RailgunRun; 18800-18809 claimed by the <private-domain> redesign brain, and zerc says 18800 is Panoptes (2026-11-02; the Panoptes brain records 9600 on Citadel). Either way Anybox stays clear of 1880x. 18820 phone
 remote + local settings web UI, 18821 shell API. Bind failure is fatal, never hop.
 
 ## 7. Build order *[proposed]*
