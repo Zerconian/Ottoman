@@ -182,7 +182,7 @@ Good-tier box.
 | 5 | Content rows | **Jellyfin first:** sign in once from the launcher (password or Quick Connect), token stored, rows filled from the API, selecting an item deep-links into Jellyfin Desktop. Plex/Emby adapters later; their rows show an empty state. **Deep-link mechanism *[proposed]*:** Jellyfin Desktop 2.0 has no item/URL argument (checked `--help` 2026-11-03: only `--tv`, `--fullscreen`, profiles, config-dir, log-level). The shell is itself a Jellyfin client, so it deep-links the Jellyfin way: `POST /Sessions/{jellyfinDesktopSessionId}/Playing?itemIds=X&playCommand=PlayNow`, the same remote-control call the official apps use for cast-to. Launch args: `--tv --fullscreen` |
 | 6 | App row | **User-managed from the TV-ready list:** installed TV-ready apps, long-press to move / hide / uninstall, an "Add app" tile at the end installs from the TV-ready list. Flathub-wide search waits for the store screen |
 | 7 | Idle | **Screensaver (dim clock/artwork) at 5 min, display off at 30 min, the box never suspends.** A playing app blocks both |
-| 8 | First run | **Network, then a setup screen** (revised by zerc 2026-11-03: "land in a UI that's usable vs having to add apps or wait for Jellyfin to magically appear"): one Wi-Fi/wired screen, then "Setting up Ottoman" installs the default apps one by one with visible status, in zerc's priority order (2026-11-03): Jellyfin, Plex, YouTube via VacuumTube, Firefox for the streaming tiles, RetroArch, Steam Link; Kodi and Moonlight stay opt-in, with Retry / Continue anyway on failure, then the launcher. Display, Jellyfin sign-in and extra apps live in Settings |
+| 8 | First run | **Language (English US preselected, applied system-wide), then Network, then a setup screen** (language added by zerc 2026-11-03; the default-app prefetch starts on the language screen whenever a connection is already up) (revised by zerc 2026-11-03: "land in a UI that's usable vs having to add apps or wait for Jellyfin to magically appear"): one Wi-Fi/wired screen, then "Setting up Ottoman" installs the default apps one by one with visible status, in zerc's priority order (2026-11-03): Jellyfin, Plex, YouTube via VacuumTube, Firefox for the streaming tiles, RetroArch, Steam Link; Kodi and Moonlight stay opt-in, with Retry / Continue anyway on failure, then the launcher. Display, Jellyfin sign-in and extra apps live in Settings |
 
 **Compositor consequence *[proposed]*:** decision 2 needs the shell to raise and lower app windows
 on Home, which `cage` cannot do (it only shows the newest toplevel). Options: (a) **sway in kiosk
@@ -223,6 +223,13 @@ a hardware brand) or pick another.
 
 Ottoman block **18820-18829**. Taken nearby: 18790-18792 RailgunRun; 18800-18809 claimed by the <private-domain> redesign brain, and zerc says 18800 is Panoptes (2026-11-02; the Panoptes brain records 9600 on Citadel). Either way Ottoman stays clear of 1880x. 18820 phone
 remote + local settings web UI, 18821 shell API. Bind failure is fatal, never hop.
+
+### 4.11a Quiet boot (zerc, 2026-11-03) *[implemented, unproven until the screendumped reboot]*
+Power-on to launcher shows no grub menu (hidden, zero timeout, Shift opens it), no kernel or systemd
+text (`quiet loglevel=3 splash rhgb systemd.show_status=0 vt.global_cursor_off=1`), a Plymouth spinner
+from the initramfs (regenerated in the image build with the plymouth module) until the session takes the
+display (`ottoman-session.service` after `plymouth-quit-wait`). Out of reach: the firmware's own logo. Open:
+the anaconda installer's Fedora-branded progress screen needs a custom product image to re-brand (M6).
 
 ### 4.11 Boot waits (zerc, 2026-11-03)
 Boot must never wait on DHCP or the internet. `NetworkManager-wait-online.service` is disabled in the
