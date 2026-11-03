@@ -27,11 +27,15 @@ COMMON=(-accel kvm -cpu host -smp 4 -m "$MEM"
   -drive file="$OVERLAY",if=virtio,format=qcow2
   -device virtio-keyboard -device virtio-tablet
   -netdev user,id=n0 -device virtio-net-pci,netdev=n0)
+# Display device: qemu-system-x86-core splits display devices into modules; probe what this host has.
+pick_gpu() { for d in virtio-vga virtio-gpu-pci bochs-display; do qemu-system-x86_64 -device "$d,help" >/dev/null 2>&1 && { echo "$d"; return; }; done; echo VGA; }
+GPU=${GPU:-$(pick_gpu)}
+echo "display device: $GPU"
 if [ "${HEADLESS:-0}" = 1 ]; then
   : > "$VMDIR/serial.log"
   rm -f "$VMDIR/mon.sock"
   setsid qemu-system-x86_64 "${COMMON[@]}" \
-    -device virtio-gpu -display none -vnc 127.0.0.1:12920 \
+    -device "$GPU" -display none -vnc 127.0.0.1:12920 \
     -monitor unix:"$VMDIR/mon.sock",server,nowait \
     -serial file:"$VMDIR/serial.log" \
     -pidfile "$VMDIR/qemu.pid" >"$VMDIR/qemu.out" 2>&1 < /dev/null &
@@ -39,7 +43,7 @@ if [ "${HEADLESS:-0}" = 1 ]; then
   echo "qemu pid $(cat "$VMDIR/qemu.pid" 2>/dev/null || echo '?'), VNC 127.0.0.1:18820, serial $VMDIR/serial.log, monitor $VMDIR/mon.sock"
 else
   exec qemu-system-x86_64 "${COMMON[@]}" \
-    -device virtio-gpu-gl -display gtk,gl=on \
+    -device "$GPU" -display gtk \
     -audiodev pipewire,id=a0 -device intel-hda -device hda-output,audiodev=a0 \
     -serial mon:stdio
 fi
