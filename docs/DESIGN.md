@@ -246,6 +246,11 @@ exact wording is not in the serial log (installer text goes to the VGA console).
 installer boot to identify it; it belongs to the anaconda ISO, not the installed system.
 
 ### 4.12 UI polish log
+- 2026-11-03 23:5x UTC, screensaver (friend's "animated wallpaper" ask): modes clock / aurora / stars, picked in
+  Settings > Display with "Screensaver after" (5/10/30 min/never) and "Display off after" (30/60 min/never) and a
+  Preview row; the saver ends on any key release; Settings stays open after a preview. Proven on the installed VM:
+  preview frames for aurora and stars, Escape ends it with the Settings row still focused, timing changes rewrite
+  idle.conf and restart swayidle (600 seen in its argv; "never" runs a sleeper instead of swayidle).
 - 2026-11-03 23:3x UTC, live proofs on the ISO-installed VM (all green): Home Assistant `/power?state=off|on`
   turned the output off and on (sway `get_outputs` power false/true); pointer mode routed Right x3 + OK to the
   virtual mouse with zero launcher key events; Settings > Updates > Check found the pushed image, Download staged
