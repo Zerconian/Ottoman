@@ -12,11 +12,15 @@ CONFIG=${CONFIG:-image/bib-config.dev.toml}   # CONFIG= (empty) for a clean disk
 ROOTFS=${ROOTFS:-xfs}
 if [ "$(id -u)" -ne 0 ]; then echo "run with sudo (bib needs privileged podman)" >&2; exit 2; fi
 mkdir -p "$OUT"
-# Copy the rootless-built image into root's store (idempotent; skipped if already identical).
+# Always copy the rootless-built image into root's store: root's copy goes stale otherwise
+# (2026-11-02: the second dev disk silently reused the first run's image and lacked the fixes).
 SRC_USER=${SUDO_USER:-zerc}
-podman image exists "$IMG" || \
-  podman pull "containers-storage:[$(getent passwd "$SRC_USER" | cut -d: -f6)/.local/share/containers/storage]$IMG" 2>/dev/null || \
-  { echo "copying $IMG from $SRC_USER's rootless store"; sudo -u "$SRC_USER" podman save "$IMG" | podman load; }
+SRC_ID=$(sudo -u "$SRC_USER" podman image inspect "$IMG" --format '{{.Id}}')
+if [ "$(podman image inspect "$IMG" --format '{{.Id}}' 2>/dev/null)" != "$SRC_ID" ]; then
+  echo "copying $IMG ($SRC_ID) from $SRC_USER's rootless store"
+  sudo -u "$SRC_USER" podman save "$IMG" | podman load >/dev/null
+fi
+echo "building from image id $(podman image inspect "$IMG" --format '{{.Id}}' | cut -c1-12)"
 CFG_ARGS=(); if [ -n "$CONFIG" ]; then CFG_ARGS=(-v "$(realpath "$CONFIG")":/config.toml:ro); echo "customizations: $CONFIG"; fi
 podman run --rm --privileged --pull=newer \
   --security-opt label=type:unconfined_t \
