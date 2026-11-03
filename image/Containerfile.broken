@@ -1,0 +1,5 @@
+# TEST IMAGE ONLY (M5 rollback proof): the current image with a session that cannot start. greenboot must fail
+# the Ottoman check three boots in a row and grub must fall back to the previous deployment. Never ship.
+FROM localhost/ottoman:dev
+RUN sed -i 's|^ExecStart=.*|ExecStart=/usr/bin/sway-does-not-exist|' /usr/lib/systemd/system/ottoman-session.service \
+    && grep -q sway-does-not-exist /usr/lib/systemd/system/ottoman-session.service
