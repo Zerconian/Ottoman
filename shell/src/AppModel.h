@@ -4,7 +4,7 @@
 #include "Sway.h"
 // The APPS row: the TV-ready catalogue, filtered to what is installed, with a running flag from sway's tree.
 // M2.1 keeps the catalogue static; M2.5 adds the Add-app tile and ordering.
-struct AppEntry { QString name, flatpakId, appId, color; bool installed = false; bool running = false; };
+struct AppEntry { QString name, flatpakId, appId, color; QStringList args; bool installed = false; bool running = false; };
 class AppModel : public QAbstractListModel {
     Q_OBJECT
     Q_PROPERTY(int installedCount READ installedCount NOTIFY changed)
@@ -16,6 +16,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
     int installedCount() const;
     Q_INVOKABLE void launch(int row);     // run if not running, else bring forward
+    Q_INVOKABLE void launchFlatpak(const QString &flatpakId);   // by ID (content rows deep-link into Jellyfin)
     Q_INVOKABLE void refresh();           // installed (flatpak list) + running (sway tree)
 signals:
     void changed();

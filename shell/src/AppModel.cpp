@@ -5,7 +5,7 @@
 AppModel::AppModel(Sway *sway, QObject *parent) : QAbstractListModel(parent), m_sway(sway) {
     // TV-ready catalogue (docs/DESIGN.md 4.4). app_id is what the window reports to sway; for Flatpaks it is the app ID.
     m_apps = {
-        {"Jellyfin",  "org.jellyfin.JellyfinDesktop",  "org.jellyfin.JellyfinDesktop",  "#00a4dc"},
+        {"Jellyfin",  "org.jellyfin.JellyfinDesktop",  "org.jellyfin.JellyfinDesktop",  "#00a4dc", {"--tv", "--fullscreen"}},
         {"Plex",      "tv.plex.PlexHTPC",              "tv.plex.PlexHTPC",              "#e5a00d"},
         {"Kodi",      "tv.kodi.Kodi",                  "tv.kodi.Kodi",                  "#17b2e7"},
         {"RetroArch", "org.libretro.RetroArch",        "org.libretro.RetroArch",        "#6f42c1"},
@@ -37,7 +37,10 @@ void AppModel::launch(int row) {
     if (a.running) { qInfo() << "resume" << a.appId; m_sway->showApp(a.appId); return; }
     if (!a.installed) { qInfo() << "not installed:" << a.flatpakId; return; }
     qInfo() << "launch" << a.flatpakId;
-    QProcess::startDetached(QStringLiteral("flatpak"), {QStringLiteral("--user"), QStringLiteral("run"), a.flatpakId});
+    QProcess::startDetached(QStringLiteral("flatpak"), QStringList{QStringLiteral("--user"), QStringLiteral("run"), a.flatpakId} + a.args);
+}
+void AppModel::launchFlatpak(const QString &flatpakId) {
+    for (int i = 0; i < m_apps.size(); ++i) if (m_apps[i].flatpakId == flatpakId) { launch(i); return; }
 }
 
 void AppModel::refresh() { refreshInstalled(); refreshRunning(); emit changed(); }
