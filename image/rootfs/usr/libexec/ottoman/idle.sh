@@ -6,6 +6,7 @@
 # (2026-11-03: everything after the first screensaver stalled). Actions are scripts, so no shell quoting.
 SAVER_SECS=300; OFF_SECS=1800
 [ -f "$HOME/.config/ottoman/idle.conf" ] && . "$HOME/.config/ottoman/idle.conf"
+# Each command is ONE argument to swayidle (an unquoted "saver.sh on" made it exit at session start, 2026-11-03).
 exec swayidle \
-  timeout "$SAVER_SECS" /usr/libexec/ottoman/saver.sh on  resume "/usr/libexec/ottoman/saver.sh off" \
-  timeout "$OFF_SECS"   /usr/libexec/ottoman/dpms.sh off  resume "/usr/libexec/ottoman/dpms.sh on"
+  timeout "$SAVER_SECS" "/usr/libexec/ottoman/saver.sh on"  resume "/usr/libexec/ottoman/saver.sh off" \
+  timeout "$OFF_SECS"   "/usr/libexec/ottoman/dpms.sh off"  resume "/usr/libexec/ottoman/dpms.sh on"

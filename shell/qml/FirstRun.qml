@@ -30,7 +30,7 @@ Rectangle {
         function onJoined(ok, text) { message = text; joinPanel.visible = false; refresh(); list.forceActiveFocus() }
         function onBusyChanged() { if (system.busyText.length) message = system.busyText + "..." }
     }
-    Component.onCompleted: refresh()
+    Component.onCompleted: { refresh(); if (visible) list.forceActiveFocus() }     // initial visible=true never fires onVisibleChanged
     onVisibleChanged: if (visible) { refresh(); list.forceActiveFocus() }
     Text { text: "Welcome to Ottoman"; color: "#f2f2f2"; font.pixelSize: 44; font.bold: true; anchors { left: parent.left; top: parent.top; margins: 48 } }
     Text { text: "Connect this box to your network. Everything else lives in Settings."; color: "#8a8f98"; font.pixelSize: 22; anchors { left: parent.left; top: parent.top; leftMargin: 48; topMargin: 118 } }
