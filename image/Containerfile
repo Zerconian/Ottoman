@@ -2,11 +2,21 @@
 # Base follows the host Fedora release (<build-host> is on 44). Bump deliberately, never "latest".
 FROM quay.io/fedora/fedora-bootc:44
 
+# RPM Fusion: Fedora proper ships no Intel VA-API drivers and strips H.264/HEVC from mesa's VA-API.
+# i965 (libva-intel-driver) is in rpmfusion-free, iHD (intel-media-driver) in rpmfusion-nonfree,
+# mesa-va-drivers-freeworld (AMD/Intel codecs re-enabled) in rpmfusion-free.
+# (First build 2026-11-02 failed with "No match for argument: libva-intel-driver": the host's
+#  dnf repoquery saw them only because <build-host> has RPM Fusion enabled.)
+RUN dnf -y install \
+      https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
+      https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm \
+    && dnf -y swap mesa-va-drivers mesa-va-drivers-freeworld
+
 # Graphics + media: both Intel VA-API drivers on purpose. iHD (intel-media-driver) is Broadwell+;
 # the floor-tier Haswell box (HD 4400) needs the legacy i965 driver (libva-intel-driver).
 RUN dnf -y install \
       cage foot \
-      mesa-dri-drivers mesa-va-drivers mesa-vulkan-drivers libva-intel-driver intel-media-driver libva-utils \
+      mesa-dri-drivers mesa-vulkan-drivers libva-intel-driver intel-media-driver libva-utils \
       pipewire pipewire-alsa pipewire-pulseaudio wireplumber \
       NetworkManager NetworkManager-wifi \
       flatpak xdg-desktop-portal xdg-desktop-portal-gtk \
