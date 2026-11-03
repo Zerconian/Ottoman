@@ -80,6 +80,8 @@ Window {
         onHeightChanged: contentY = 0
     }
     onRowIndexChanged: page.contentY = rowIndex === 0 ? 0 : rowIndex === 1 ? 240 : 520
+    // Row models swap when Jellyfin connects or signs out, which drops keyboard focus: re-focus the current row.
+    Connections { target: jellyfin; function onChanged() { if (!signIn.visible) Qt.callLater(function() { focusRow(rowIndex) }) } }
     ListModel { id: signInModel; ListElement { name: "Sign in to Jellyfin"; subtitle: "Enter to connect your server"; imageUrl: ""; progress: 0 } }
     SignIn { id: signIn; visible: false; onVisibleChanged: if (!visible) focusRow(rowIndex); onDone: visible = false }
     Text {
