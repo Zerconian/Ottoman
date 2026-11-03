@@ -26,9 +26,9 @@ public:
     Q_INVOKABLE void move(int row, int delta);
     Q_INVOKABLE void hide(int row);
     Q_INVOKABLE void uninstall(int row);
-    Q_INVOKABLE QVariantList catalogue() const;        // every catalogue app: {name, flatpakId, installed, hidden}
+    Q_INVOKABLE QVariantList catalogue() const;        // every catalogue app: {name, key, flatpakId, installed, hidden, onRow, web, note}
     Q_INVOKABLE void install(const QString &flatpakId);
-    Q_INVOKABLE void unhide(const QString &flatpakId);
+    Q_INVOKABLE void unhide(const QString &key);       // key: flatpakId, or web:<slug> for a streaming site (they all share Firefox)
     // first-run setup: install the default set one by one, reporting each step (DESIGN.md 4.10 #8 revised 2026-11-03)
     Q_INVOKABLE QVariantList defaults() const;          // [{name, flatpakId, installed}] unique by flatpakId
     Q_INVOKABLE void installDefaults();                 // emits setupProgress(name, state) per app, setupDone(failedCount)
@@ -47,7 +47,9 @@ private:
     Sway *m_sway;
     QList<AppEntry> m_apps;      // catalogue
     QList<int> m_rows;           // indices into m_apps shown in the row, in order
-    QStringList m_order, m_hidden;
+    QStringList m_order, m_hidden, m_shown;   // keyed by AppEntry key; m_shown = opt-in web sites the user added to the row
+    static QString keyOf(const AppEntry &a);
+    bool onRow(const AppEntry &a) const;
     QString m_busy;
     QStringList m_queue; int m_queueFailed = 0;
     bool m_setupRunning = false;

@@ -42,21 +42,25 @@ AppModel::AppModel(Sway *sway, QObject *parent) : QAbstractListModel(parent), m_
     m_poll.start(2000);
 }
 
+// Streaming sites all live in the one Firefox Flatpak, so order/hidden/shown are keyed per entry, not per package
+// (found 2026-11-03: keyed by flatpakId, installing Firefox put all 13 sites on the row and Add app could not add one).
+QString AppModel::keyOf(const AppEntry &a) { return a.webUrl.isEmpty() ? a.flatpakId : "web:" + a.name.toLower().remove(QRegularExpression("[^a-z0-9]")); }
+bool AppModel::onRow(const AppEntry &a) const { return a.installed && !a.hidden && (a.webUrl.isEmpty() || a.byDefault || m_shown.contains(keyOf(a))); }
 void AppModel::load() {
     QSettings s(appsConf(), QSettings::IniFormat);
-    m_order = s.value("order").toStringList(); m_hidden = s.value("hidden").toStringList();
-    for (AppEntry &a : m_apps) a.hidden = m_hidden.contains(a.flatpakId);
+    m_order = s.value("order").toStringList(); m_hidden = s.value("hidden").toStringList(); m_shown = s.value("shown").toStringList();
+    for (AppEntry &a : m_apps) a.hidden = m_hidden.contains(keyOf(a));
 }
 void AppModel::save() {
     QSettings s(appsConf(), QSettings::IniFormat);
-    s.setValue("order", m_order); s.setValue("hidden", m_hidden); s.sync();
+    s.setValue("order", m_order); s.setValue("hidden", m_hidden); s.setValue("shown", m_shown); s.sync();
 }
 
 void AppModel::rebuildRows() {
     // installed and not hidden, in saved order; apps missing from the order go to the end in catalogue order
     QList<int> rows;
-    for (const QString &id : m_order) for (int i = 0; i < m_apps.size(); ++i) if (m_apps[i].flatpakId == id && m_apps[i].installed && !m_apps[i].hidden && !rows.contains(i)) rows << i;
-    for (int i = 0; i < m_apps.size(); ++i) if (m_apps[i].installed && !m_apps[i].hidden && !rows.contains(i)) rows << i;
+    for (const QString &id : m_order) for (int i = 0; i < m_apps.size(); ++i) if (keyOf(m_apps[i]) == id && onRow(m_apps[i]) && !rows.contains(i)) rows << i;
+    for (int i = 0; i < m_apps.size(); ++i) if (onRow(m_apps[i]) && !rows.contains(i)) rows << i;
     if (rows != m_rows) { beginResetModel(); m_rows = rows; endResetModel(); }
 }
 
@@ -123,23 +127,24 @@ void AppModel::refreshRunning() {
 void AppModel::move(int row, int delta) {
     const int to = row + delta;
     if (row < 0 || row >= m_rows.size() || to < 0 || to >= m_rows.size()) return;
-    QStringList order; for (int i : m_rows) order << m_apps[i].flatpakId;
+    QStringList order; for (int i : m_rows) order << keyOf(m_apps[i]);
     order.move(row, to); m_order = order; save();
     qInfo() << "apps: moved" << m_apps[m_rows[row]].name << "to" << to;
     rebuildRows(); emit changed();
 }
 void AppModel::hide(int row) {
     if (row < 0 || row >= m_rows.size()) return;
-    AppEntry &a = m_apps[m_rows[row]]; a.hidden = true; if (!m_hidden.contains(a.flatpakId)) m_hidden << a.flatpakId; save();
+    AppEntry &a = m_apps[m_rows[row]]; a.hidden = true; if (!m_hidden.contains(keyOf(a))) m_hidden << keyOf(a); m_shown.removeAll(keyOf(a)); save();
     qInfo() << "apps: hid" << a.name; rebuildRows(); emit changed();
 }
-void AppModel::unhide(const QString &flatpakId) {
-    m_hidden.removeAll(flatpakId); for (AppEntry &a : m_apps) if (a.flatpakId == flatpakId) a.hidden = false; save();
-    qInfo() << "apps: unhid" << flatpakId; rebuildRows(); emit changed();
+void AppModel::unhide(const QString &key) {
+    m_hidden.removeAll(key);
+    for (AppEntry &a : m_apps) if (keyOf(a) == key) { a.hidden = false; if (!a.webUrl.isEmpty() && !m_shown.contains(key)) m_shown << key; }
+    save(); qInfo() << "apps: unhid" << key; rebuildRows(); emit changed();
 }
 QVariantList AppModel::catalogue() const {
     QVariantList l;
-    for (const AppEntry &a : m_apps) l << QVariantMap{{"name", a.name}, {"flatpakId", a.flatpakId}, {"installed", a.installed}, {"hidden", a.hidden}, {"note", a.note}};
+    for (const AppEntry &a : m_apps) l << QVariantMap{{"name", a.name}, {"key", keyOf(a)}, {"flatpakId", a.flatpakId}, {"installed", a.installed}, {"hidden", a.hidden}, {"onRow", onRow(a)}, {"web", !a.webUrl.isEmpty()}, {"note", a.note}};
     return l;
 }
 void AppModel::runFlatpak(const QString &label, const QStringList &args, const QString &flatpakId) {

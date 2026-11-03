@@ -10,16 +10,16 @@ Rectangle {
     function build() {
         const items = []
         for (const a of apps.catalogue()) {
-            if (a.installed && !a.hidden) items.push({label: a.name, value: "installed" + (a.note ? ", " + a.note : ""), action: ""})
-            else if (a.installed && a.hidden) items.push({label: a.name, value: "hidden, Enter shows it", action: "unhide", id: a.flatpakId})
-            else items.push({label: a.name, value: (a.note ? a.note + ", " : "") + "Enter installs from Flathub", action: "install", id: a.flatpakId})
+            if (a.onRow) items.push({label: a.name, value: "on the row" + (a.note ? ", " + a.note : ""), action: ""})
+            else if (a.installed) items.push({label: a.name, value: (a.note ? a.note + ", " : "") + (a.web ? "Enter adds it to the row" : "hidden, Enter shows it"), action: "unhide", id: a.key})
+            else items.push({label: a.name, value: (a.note ? a.note + ", " : "") + (a.web ? "Enter installs Firefox and adds it" : "Enter installs from Flathub"), action: "install", id: a.flatpakId, key: a.key})
         }
         list.items = items
     }
     function act(i) {
         const it = list.items[i]; if (!it.action) return
         system.log("addapp " + it.action + " " + it.id)
-        if (it.action === "install") { message = "Installing " + it.label + "..."; apps.install(it.id) } else { apps.unhide(it.id); build() }
+        if (it.action === "install") { message = "Installing " + it.label + "..."; if (it.key) apps.unhide(it.key); apps.install(it.id) } else { apps.unhide(it.id); build() }
     }
     Connections { target: apps; function onOpDone(ok, text) { page.message = text; page.build() } }
     Keys.onEscapePressed: { visible = false; done() }
