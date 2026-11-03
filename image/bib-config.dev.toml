@@ -1,0 +1,23 @@
+# bootc-image-builder customizations for DEV disks only. The image itself stays clean: this adds a
+# login user with an SSH key and marks the build host's local registry as insecure so the VM can
+# 'bootc switch' to freshly built images without another bib run. Never ship a disk built with this.
+[[customizations.user]]
+name = "zerc"
+groups = ["wheel"]
+key = "<dev-ssh-public-key>"
+
+[[customizations.directories]]
+path = "/etc/containers/registries.conf.d"
+
+[[customizations.files]]
+path = "/etc/containers/registries.conf.d/50-ottoman-dev.conf"
+mode = "0644"
+data = """
+# dev only: the build host's local registry as seen from QEMU user networking (10.0.2.2) and the LAN
+[[registry]]
+location = "10.0.2.2:18821"
+insecure = true
+[[registry]]
+location = "<build-host>:18821"
+insecure = true
+"""

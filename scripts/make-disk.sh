@@ -8,6 +8,7 @@ echo "pwd: $(pwd)  branch: $(git rev-parse --abbrev-ref HEAD)  head: $(git rev-p
 IMG=${1:-localhost/ottoman:dev}
 OUT=${2:-$(pwd)/build/disk}
 TYPE=${TYPE:-qcow2}            # qcow2 | anaconda-iso | raw
+CONFIG=${CONFIG:-image/bib-config.dev.toml}   # CONFIG= (empty) for a clean disk
 ROOTFS=${ROOTFS:-xfs}
 if [ "$(id -u)" -ne 0 ]; then echo "run with sudo (bib needs privileged podman)" >&2; exit 2; fi
 mkdir -p "$OUT"
@@ -16,8 +17,10 @@ SRC_USER=${SUDO_USER:-zerc}
 podman image exists "$IMG" || \
   podman pull "containers-storage:[$(getent passwd "$SRC_USER" | cut -d: -f6)/.local/share/containers/storage]$IMG" 2>/dev/null || \
   { echo "copying $IMG from $SRC_USER's rootless store"; sudo -u "$SRC_USER" podman save "$IMG" | podman load; }
+CFG_ARGS=(); if [ -n "$CONFIG" ]; then CFG_ARGS=(-v "$(realpath "$CONFIG")":/config.toml:ro); echo "customizations: $CONFIG"; fi
 podman run --rm --privileged --pull=newer \
   --security-opt label=type:unconfined_t \
+  "${CFG_ARGS[@]}" \
   -v "$OUT":/output \
   -v /var/lib/containers/storage:/var/lib/containers/storage \
   quay.io/centos-bootc/bootc-image-builder:latest \
