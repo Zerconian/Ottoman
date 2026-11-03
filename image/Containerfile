@@ -23,7 +23,8 @@ RUN dnf -y install \
       dejavu-sans-fonts glibc-langpack-en \
       polkit dbus-daemon \
     && dnf clean all \
-    && rm -rf /var/cache /var/log/dnf* /var/lib/dnf
+    && rm -rf /var/cache /var/log/dnf* /var/lib/dnf /run/dnf /run/selinux-policy /tmp/* \
+    && rm -rf /var/lib/AccountsService /var/lib/flatpak /var/lib/geoclue
 
 COPY rootfs/ /
 RUN chmod 0755 /usr/libexec/ottoman/session.sh \

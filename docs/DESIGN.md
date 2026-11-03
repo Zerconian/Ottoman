@@ -225,5 +225,5 @@ the result. Build: `scripts/build-image.sh`, logs in `~/.local/share/claude-scra
 |---|---|---|
 | Idle RAM at launcher | < 600 MB | real box, `free -m` after 5 min |
 | Cold boot to launcher | < 15 s on SATA SSD | `systemd-analyze` + stopwatch |
-| Image size | < 3 GB | registry manifest |
+| Image size | < 3 GB | registry manifest. **M1 measured 2026-11-02: 3.23 GB** (base fedora-bootc:44 is 1.95 GB; 277 packages added, 832 total). Over target; trim is a later milestone |
 | Running services at idle | < 25 | `systemctl list-units --state=running` |
