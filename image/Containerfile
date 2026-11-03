@@ -41,7 +41,10 @@ COPY --from=shell-build /out/ottoman-shell /usr/libexec/ottoman/ottoman-shell
 COPY inputd/ottoman-inputd.py /usr/libexec/ottoman/ottoman-inputd
 RUN chmod 0755 /usr/libexec/ottoman/*.sh /usr/libexec/ottoman/ottoman-shell && chmod 0440 /etc/sudoers.d/ottoman && visudo -cf /etc/sudoers.d/ottoman \
     && chmod 0755 /usr/libexec/ottoman/ottoman-inputd && chmod 0755 /etc/greenboot/check/required.d/*.sh && systemctl enable ottoman-session.service ottoman-inputd.service greenboot-healthcheck.service greenboot-set-rollback-trigger.service \
+    && systemctl disable NetworkManager-wait-online.service \
     && systemctl set-default multi-user.target
 
+# Boot never waits on the network (zerc, 2026-11-03): NetworkManager-wait-online is off; nothing of ours is ordered
+# after network-online.target, and every wait Ottoman adds (first-boot Flatpak install 60 s, greenboot check 90 s) is bounded.
 # bootc's own lint: no content in /var, no world-writable surprises.
 RUN bootc container lint

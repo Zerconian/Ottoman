@@ -224,6 +224,14 @@ a hardware brand) or pick another.
 Ottoman block **18820-18829**. Taken nearby: 18790-18792 RailgunRun; 18800-18809 claimed by the <private-domain> redesign brain, and zerc says 18800 is Panoptes (2026-11-02; the Panoptes brain records 9600 on Citadel). Either way Ottoman stays clear of 1880x. 18820 phone
 remote + local settings web UI, 18821 shell API. Bind failure is fatal, never hop.
 
+### 4.11 Boot waits (zerc, 2026-11-03)
+Boot must never wait on DHCP or the internet. `NetworkManager-wait-online.service` is disabled in the
+image (nothing in the session is ordered after `network-online.target`); Ottoman's own waits are bounded
+(first-boot Flatpak install: 60 s for the network, then it gives up and shows the launcher; greenboot
+check: 90 s). Open: zerc saw a dracut line with "no time limit" while the installer ISO booted; the
+exact wording is not in the serial log (installer text goes to the VGA console). Screendump the next
+installer boot to identify it; it belongs to the anaconda ISO, not the installed system.
+
 ## 6a. Build and test tooling (<build-host>, 2026-11-02)
 
 Present: podman 5.8.9, Fedora 44, 598 GB free, 16 threads, 31 GB RAM. Base image
