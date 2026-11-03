@@ -1,6 +1,6 @@
-# Anybox — Design
+# Ottoman — Design
 
-Working name. zerc has not settled on one (2026-11-02).
+Named **Ottoman** by zerc, 2026-11-02 ("Ottoman is fine enough"): the furniture in front of the couch, with OTT (over-the-top streaming) built into the word. Working name before that was Anybox.
 
 **Legend.** Plain items are zerc's decisions. *[proposed]* items are Claude fill-ins awaiting
 sign-off. Every *[proposed]* line names the alternatives considered and why they lost, so a reader
@@ -35,13 +35,13 @@ roughly 720p-1080p, no HDR. L1 needs a hardware TEE and Google's per-device cert
 only to locked-down devices (OSMC, who sell a Linux box, could not get it). The only x86 path to 4K
 streaming is Windows + Edge + PlayReady SL3000 on certified Intel hardware.
 
-Consequence: Anybox wins on local media (direct-play 4K HEVC/AV1, HDR, lossless audio
+Consequence: Ottoman wins on local media (direct-play 4K HEVC/AV1, HDR, lossless audio
 passthrough), live TV, gaming and YouTube. For 4K Netflix the honest advice is "use the TV's own
 app or a cheap stick". Memory: `project_drm_ceiling.md`.
 
 ## 3. Landscape (searched 2026-11-02)
 
-| Project | Lesson for Anybox |
+| Project | Lesson for Ottoman |
 |---|---|
 | LibreELEC | packaging discipline, JeOS footprint; but Kodi-only, no app model |
 | Plasma Bigscreen (Plasma 6.7, June 2026) | the UI ambition; but it is a shell on a full Plasma stack |
@@ -59,9 +59,9 @@ Detail: memory `project_landscape_2026-11.md`.
  │   Emby Theater · web-app runner (YouTube TV, Netflix…)    │
  │   Steam / RetroArch / Moonlight (optional tier)           │
  ├──────────────────────────────────────────────────────────┤
- │ anybox-shell: QML launcher (home, app rail, now-playing,  │
- │   settings, first-run) · anybox-inputd (CEC/IR/BT/phone   │
- │   remote → one key map) · anybox-updated (bootc + flatpak)│
+ │ ottoman-shell: QML launcher (home, app rail, now-playing,  │
+ │   settings, first-run) · ottoman-inputd (CEC/IR/BT/phone   │
+ │   remote → one key map) · ottoman-updated (bootc + flatpak)│
  ├──────────────────────────────────────────────────────────┤
  │ session: Wayland kiosk compositor (cage; gamescope if HDR │
  │   needs it) · PipeWire · NetworkManager · bluez           │
@@ -111,7 +111,7 @@ Detail: memory `project_landscape_2026-11.md`.
   path), Firefox or Chromium (keyboard-ish; "with a remote this is rough").
 
 ### 4.5 YouTube and streaming wrappers: one web-app runner (decided, delegated 2026-11-02)
-- `anybox-webapp`: a Chromium-based (or WebKitGTK; measure Widevine availability) kiosk runner that
+- `ottoman-webapp`: a Chromium-based (or WebKitGTK; measure Widevine availability) kiosk runner that
   opens a site fullscreen with a TV user agent and maps remote keys to the site's keys. YouTube uses
   `youtube.com/tv` (the leanback UI YouTube ships to smart TVs); Netflix/Disney+/Max open their web
   players with the Widevine CDM, capped at L3 quality, and the card says so.
@@ -119,7 +119,7 @@ Detail: memory `project_landscape_2026-11.md`.
 - ToS note: UA spoofing for youtube.com/tv is a grey area that every third-party TV wrapper shares.
 
 ### 4.6 Input *[proposed: one daemon, Android-TV key map]*
-- `anybox-inputd` normalises HDMI-CEC (libcec; most PCs need a Pulse-Eight USB adapter, a few NUCs
+- `ottoman-inputd` normalises HDMI-CEC (libcec; most PCs need a Pulse-Eight USB adapter, a few NUCs
   have a header), IR (kernel `rc` + ir-keytable), Bluetooth remotes and gamepads (bluez), and a
   phone web remote served on the LAN, into one key set: DPAD, OK, Back, Home, Menu, Play/Pause,
   volume. Apps see standard keyboard/gamepad events.
@@ -190,7 +190,7 @@ a hardware brand) or pick another.
 
 ## 6. Ports *[proposed]*
 
-Anybox block **18820-18829**. Taken nearby: 18790-18792 RailgunRun; 18800-18809 claimed by the <private-domain> redesign brain, and zerc says 18800 is Panoptes (2026-11-02; the Panoptes brain records 9600 on Citadel). Either way Anybox stays clear of 1880x. 18820 phone
+Ottoman block **18820-18829**. Taken nearby: 18790-18792 RailgunRun; 18800-18809 claimed by the <private-domain> redesign brain, and zerc says 18800 is Panoptes (2026-11-02; the Panoptes brain records 9600 on Citadel). Either way Ottoman stays clear of 1880x. 18820 phone
 remote + local settings web UI, 18821 shell API. Bind failure is fatal, never hop.
 
 ## 7. Build order *[proposed]*
