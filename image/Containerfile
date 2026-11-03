@@ -32,6 +32,7 @@ RUN dnf -y install \
       polkit dbus-daemon \
       python3-evdev \
       greenboot greenboot-default-health-checks \
+      plymouth plymouth-theme-spinner plymouth-system-theme \
     && dnf clean all \
     && rm -rf /var/cache /var/log/dnf* /var/lib/dnf /run/dnf /run/selinux-policy /tmp/* \
     && rm -rf /var/lib/AccountsService /var/lib/flatpak /var/lib/geoclue
@@ -44,6 +45,14 @@ RUN chmod 0755 /usr/libexec/ottoman/*.sh /usr/libexec/ottoman/ottoman-shell && c
     && systemctl disable NetworkManager-wait-online.service \
     && systemctl set-default multi-user.target
 
+# Quiet boot (zerc, 2026-11-03): grub menu hidden (Shift shows it), Plymouth spinner from the initramfs until sway's
+# first frame. The initramfs is regenerated so plymouth is inside it; grub's static config comes from bootupd at install.
+RUN sed -i 's/^set timeout_style=menu$/set timeout_style=hidden/; s/^set timeout=1$/set timeout=0/' /usr/lib/bootupd/grub2-static/grub-static-pre.cfg \
+    && grep -q "timeout_style=hidden" /usr/lib/bootupd/grub2-static/grub-static-pre.cfg \
+    && plymouth-set-default-theme spinner \
+    && KVER=$(ls /usr/lib/modules | head -1) \
+    && dracut --no-hostonly --kver "$KVER" --reproducible --zstd --add "ostree plymouth" -f "/usr/lib/modules/$KVER/initramfs.img" 2>&1 | tail -2 \
+    && lsinitrd "/usr/lib/modules/$KVER/initramfs.img" | grep -q plymouthd
 # Boot never waits on the network (zerc, 2026-11-03): NetworkManager-wait-online is off; nothing of ours is ordered
 # after network-online.target, and every wait Ottoman adds (first-boot Flatpak install 60 s, greenboot check 90 s) is bounded.
 # bootc's own lint: no content in /var, no world-writable surprises.

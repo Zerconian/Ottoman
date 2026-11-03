@@ -1,6 +1,6 @@
 [Unit]
 Description=Ottoman TV session (sway kiosk on tty1)
-After=systemd-user-sessions.service systemd-logind.service NetworkManager.service
+After=systemd-user-sessions.service systemd-logind.service NetworkManager.service plymouth-quit-wait.service
 Wants=NetworkManager.service
 Conflicts=getty@tty1.service
 After=getty@tty1.service

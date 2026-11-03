@@ -1,2 +1,2 @@
 # The TV session user may drive bootc (updates, rollback, status) and nothing else. Ships in the image.
-ottoman ALL=(root) NOPASSWD: /usr/bin/bootc status --format json, /usr/bin/bootc upgrade --check, /usr/bin/bootc upgrade, /usr/bin/bootc rollback
+ottoman ALL=(root) NOPASSWD: /usr/bin/bootc status --format json, /usr/bin/bootc upgrade --check, /usr/bin/bootc upgrade, /usr/bin/bootc rollback, /usr/bin/localectl set-locale *

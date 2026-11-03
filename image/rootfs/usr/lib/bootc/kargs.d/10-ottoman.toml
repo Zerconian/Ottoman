@@ -1,3 +1,3 @@
 # Appliance console: no kernel/audit chatter on the TV. First VM boot (2026-11-02) showed tty1 covered in
 # audit printk lines behind the kiosk. loglevel=3 keeps errors, drops notices; quiet hides the boot scroll.
-kargs = ["quiet", "loglevel=3"]
+kargs = ["quiet", "loglevel=3", "splash", "rhgb", "systemd.show_status=0", "vt.global_cursor_off=1", "plymouth.ignore-serial-consoles"]
