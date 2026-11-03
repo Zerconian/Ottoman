@@ -10,7 +10,8 @@ AppModel::AppModel(Sway *sway, QObject *parent) : QAbstractListModel(parent), m_
     // TV-ready catalogue (docs/DESIGN.md 4.4). app_id is what the window reports to sway; for Flatpaks it is the app ID.
     m_apps = {
         {"Jellyfin",  "org.jellyfin.JellyfinDesktop",  "org.jellyfin.JellyfinDesktop",  "#00a4dc", {"--tv", "--fullscreen"}},
-        {"YouTube",   "rocks.shy.VacuumTube",          "rocks.shy.VacuumTube",          "#c4302b"},
+        // VacuumTube ships with --socket=x11 and the session has no XWayland: force Wayland (crashed in zypak otherwise, 2026-11-03).
+        {"YouTube",   "rocks.shy.VacuumTube",          "rocks.shy.VacuumTube",          "#c4302b", {}, {"--nosocket=x11", "--socket=wayland"}},
         {"Plex",      "tv.plex.PlexHTPC",              "tv.plex.PlexHTPC",              "#e5a00d"},
         {"Kodi",      "tv.kodi.Kodi",                  "tv.kodi.Kodi",                  "#17b2e7"},
         {"RetroArch", "org.libretro.RetroArch",        "org.libretro.RetroArch",        "#6f42c1"},
@@ -127,6 +128,10 @@ void AppModel::runFlatpak(const QString &label, const QStringList &args, const Q
 }
 void AppModel::install(const QString &flatpakId) {
     unhide(flatpakId);
+    for (const AppEntry &a : m_apps) if (a.flatpakId == flatpakId && !a.overrides.isEmpty()) {
+        QProcess::execute(QStringLiteral("flatpak"), QStringList{QStringLiteral("override"), QStringLiteral("--user")} + a.overrides + QStringList{flatpakId});
+        qInfo() << "apps: applied overrides for" << flatpakId << a.overrides;
+    }
     runFlatpak("Installing", {"--user", "install", "-y", "--noninteractive", "flathub", flatpakId}, flatpakId);
 }
 void AppModel::uninstall(int row) {
