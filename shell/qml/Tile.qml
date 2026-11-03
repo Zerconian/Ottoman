@@ -21,7 +21,7 @@ Rectangle {
     Behavior on scale { NumberAnimation { duration: 90 } }
     // background: gradient of the tint, dimmer when not installed, neutral for the Add tile
     Rectangle {
-        anchors.fill: parent; anchors.margins: tile.current ? 4 : 0; radius: 10
+        anchors.fill: parent; anchors.margins: tile.current ? 4 : 0; radius: 10; clip: true     // the glow must not leak above the tile
         gradient: Gradient { orientation: Gradient.Vertical
             GradientStop { position: 0.0; color: tile.isAdd ? "#22262c" : Qt.lighter(tile.tint, tile.installed ? 1.15 : 0.6) }
             GradientStop { position: 1.0; color: tile.isAdd ? "#15181c" : Qt.darker(tile.tint, tile.installed ? 2.2 : 4.0) } }
@@ -31,7 +31,7 @@ Rectangle {
                 GradientStop { position: 0.0; color: "#ffffff" } GradientStop { position: 0.55; color: "transparent" } } }
         // glow behind the art
         Rectangle { visible: tile.hasArt; width: 150; height: 150; radius: 75; color: "#ffffff"; opacity: 0.08
-            anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.top; verticalCenterOffset: 58 } }
+            anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.top; verticalCenterOffset: 62 } }
     }
     Image { id: icon; visible: tile.iconUrl.length > 0; source: tile.iconUrl; width: 80; height: 80
             sourceSize.width: 256; sourceSize.height: 256; fillMode: Image.PreserveAspectFit; smooth: true; mipmap: true; asynchronous: true
