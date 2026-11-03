@@ -11,18 +11,20 @@ static QString appsConf() { const QString d = QStandardPaths::writableLocation(Q
 AppModel::AppModel(Sway *sway, QObject *parent) : QAbstractListModel(parent), m_sway(sway) {
     // TV-ready catalogue (docs/DESIGN.md 4.4). app_id is what the window reports to sway; for Flatpaks it is the app ID.
     m_apps = {
+        // Order = zerc's priority (2026-11-03): Jellyfin > Plex > YouTube > Firefox (streaming tiles) > RetroArch, Steam Link > the rest.
+        // byDefault (last field) = installed by the first-run setup screen, in this order.
         {"Jellyfin",  "org.jellyfin.JellyfinDesktop",  "org.jellyfin.JellyfinDesktop",  "#00a4dc", {"--tv", "--fullscreen"}, {}, "", "", true},
+        {"Plex",      "tv.plex.PlexHTPC",              "tv.plex.PlexHTPC",              "#e5a00d", {}, {}, "", "", true},
         // VacuumTube ships with --socket=x11 and the session has no XWayland: force Wayland (crashed in zypak otherwise, 2026-11-03).
         {"YouTube",   "rocks.shy.VacuumTube",          "rocks.shy.VacuumTube",          "#c4302b", {}, {"--nosocket=x11", "--socket=wayland"}, "", "", true},
-        {"Plex",      "tv.plex.PlexHTPC",              "tv.plex.PlexHTPC",              "#e5a00d"},
-        {"Kodi",      "tv.kodi.Kodi",                  "tv.kodi.Kodi",                  "#17b2e7"},
-        {"RetroArch", "org.libretro.RetroArch",        "org.libretro.RetroArch",        "#6f42c1"},
-        {"Steam Link","com.valvesoftware.SteamLink",   "com.valvesoftware.SteamLink",   "#1b2838"},
-        {"Moonlight", "com.moonlight_stream.Moonlight","com.moonlight_stream.Moonlight","#2d7a3e"},
         // Streaming sites run through webapp.sh in Firefox kiosk (DESIGN.md 4.5). Same Flatpak, own profile each.
         {"Netflix",   "org.mozilla.firefox", "org.mozilla.firefox", "#b1060f", {}, {}, "https://www.netflix.com/browse", "up to 1080p (Widevine L3)", true},
         {"Disney+",   "org.mozilla.firefox", "org.mozilla.firefox", "#0a3d91", {}, {}, "https://www.disneyplus.com/home", "up to 1080p (Widevine L3)"},
         {"Max",       "org.mozilla.firefox", "org.mozilla.firefox", "#5b2ccd", {}, {}, "https://play.max.com", "up to 1080p (Widevine L3)"},
+        {"RetroArch", "org.libretro.RetroArch",        "org.libretro.RetroArch",        "#6f42c1", {}, {}, "", "", true},
+        {"Steam Link","com.valvesoftware.SteamLink",   "com.valvesoftware.SteamLink",   "#1b2838", {}, {}, "", "", true},
+        {"Kodi",      "tv.kodi.Kodi",                  "tv.kodi.Kodi",                  "#17b2e7"},
+        {"Moonlight", "com.moonlight_stream.Moonlight","com.moonlight_stream.Moonlight","#2d7a3e"},
     };
     load();
     refresh();
