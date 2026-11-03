@@ -11,6 +11,7 @@ Window {
     function focusRow(i) {
         const r = rows(); i = Math.max(0, Math.min(r.length - 1, i))
         if (r[i].count === 0 && i !== 0) return
+        if (r[i].currentIndex < 0) r[i].currentIndex = 0      // a model swap leaves no current item: Enter would act on nothing
         rowIndex = i; r[i].forceActiveFocus()
     }
     Text { text: "OTTOMAN"; color: "#8a8f98"; font.pixelSize: 28; font.letterSpacing: 6; anchors { left: parent.left; top: parent.top; margins: 48 } }
@@ -54,7 +55,7 @@ Window {
                     highlightMoveDuration: 0; preferredHighlightBegin: 0; preferredHighlightEnd: width - 60; highlightRangeMode: ListView.ApplyRange
                     delegate: Card { title: model.name; subtitle: model.subtitle; imageUrl: model.imageUrl; progress: model.progress; current: ListView.isCurrentItem
                         MouseArea { anchors.fill: parent; onClicked: { contRow.currentIndex = index; contRow.activate() } } }
-                    function activate() { if (jellyfin.state === "connected") jellyfin.play(jellyfin.continueModel.idAt(currentIndex)); else signIn.visible = true }
+                    function activate() { if (currentIndex < 0) currentIndex = 0; if (jellyfin.state === "connected") jellyfin.play(jellyfin.continueModel.idAt(currentIndex)); else signIn.visible = true }
                     Keys.onReturnPressed: activate()
                     Keys.onEnterPressed: activate()
                     Keys.onUpPressed: focusRow(0)

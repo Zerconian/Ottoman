@@ -146,7 +146,11 @@ void Jellyfin::refresh() {
     });
 }
 
-void Jellyfin::play(const QString &itemId) { playOnSession(itemId, 0); }
+void Jellyfin::play(const QString &itemId) {
+    if (itemId.isEmpty()) { qWarning() << "jellyfin: play called with no item"; return; }
+    qInfo().noquote() << "jellyfin: play" << itemId;
+    playOnSession(itemId, 0);
+}
 
 void Jellyfin::playOnSession(const QString &itemId, int attempt) {
     request("GET", "/Sessions", {}, [this, itemId, attempt](int st, const QJsonDocument &d) {
