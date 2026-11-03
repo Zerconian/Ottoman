@@ -1,5 +1,5 @@
 [Unit]
-Description=Ottoman TV session (cage kiosk on tty1)
+Description=Ottoman TV session (sway kiosk on tty1)
 After=systemd-user-sessions.service systemd-logind.service NetworkManager.service
 Wants=NetworkManager.service
 Conflicts=getty@tty1.service
@@ -17,8 +17,10 @@ StandardOutput=journal
 StandardError=journal
 Environment=XDG_SESSION_TYPE=wayland
 Environment=XDG_RUNTIME_DIR=/run/user/%U
+Environment=XDG_CURRENT_DESKTOP=sway
+Environment=QT_QPA_PLATFORM=wayland
 WorkingDirectory=/var/home/ottoman
-ExecStart=/usr/bin/cage -- /usr/libexec/ottoman/session.sh
+ExecStart=/usr/bin/sway -c /usr/share/ottoman/sway.config
 Restart=always
 RestartSec=2
 

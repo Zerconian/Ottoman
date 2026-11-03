@@ -1,5 +1,6 @@
 #!/bin/bash
-# M1 session: ensure Flathub + Jellyfin Media Player exist (user install, first boot only), then run it.
+# Session client, started by sway (sway.config exec). M1/M2.0: ensure Flathub + Jellyfin Desktop exist
+# (user install, first boot only), then run it. The M2 launcher replaces this script as the persistent client.
 # Anything that fails drops to a terminal so the box is never a black screen. Errors go to the journal.
 set -u
 APP=org.jellyfin.JellyfinDesktop   # Flathub renamed it from com.github.iwalton3.jellyfin-media-player (2.0.0, 2026); the old ID 308-redirects
