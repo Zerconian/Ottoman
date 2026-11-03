@@ -192,8 +192,8 @@ total control, but eglfs on random mini PCs is less proven than wlroots. (c) lab
 with a smaller surface but a younger IPC. Pick: **(a) sway**. **M2.0 PROVEN 2026-11-03 09:4x on the VM:** sway 1.11 kiosk session active (0 restarts, 7.0 s boot), Jellyfin Desktop fullscreen (get_tree: fs=1 focused), `move scratchpad` blanks the screen with the process still alive (screendump 432 bytes = black), `scratchpad show, fullscreen enable` restores it (screendump identical to before). Rollback: cage deployment kept by bootc.
 
 **M2 build order *[proposed]*:** M2.0 session = sway kiosk + launcher process + IPC raise/lower proven
-on the VM. M2.1 home screen: header, APPS row from installed Flatpaks, launch/suspend/resume, running
-dot. M2.2 Jellyfin sign-in + content rows + deep links. M2.3 Settings (network, display, audio,
+on the VM (DONE 2026-11-03). M2.1 home screen: header, APPS row from installed Flatpaks, launch/suspend/resume, running
+dot (**DONE 2026-11-03 14:58 UTC on the VM:** screendumps m21-a/b/c; Enter launched Jellyfin Desktop in 3 s, Home put it in the scratchpad still running and the shell came back with the green dot; get_tree: Jellyfin visible=False, shell visible+focused. Shell RSS 194 MB, session 1188 MB used with Jellyfin behind. Known: the APPS row clips at the right edge; xdg-desktop-portal fails to start under sway (needs `xdg-desktop-portal-wlr`), harmless for now). M2.2 Jellyfin sign-in + content rows + deep links. M2.3 Settings (network, display, audio,
 updates, about). M2.4 first-run (network) + screensaver/display-off. M2.5 app-row management + Add
 app. Each step ships to the VM via the registry and is driven by keyboard/gamepad in QEMU.
 
