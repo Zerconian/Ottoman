@@ -34,7 +34,7 @@ RUN dnf -y install \
     && rm -rf /var/cache /var/log/dnf* /var/lib/dnf /run/dnf /run/selinux-policy /tmp/* \
     && rm -rf /var/lib/AccountsService /var/lib/flatpak /var/lib/geoclue
 
-COPY rootfs/ /
+COPY image/rootfs/ /
 COPY --from=shell-build /out/ottoman-shell /usr/libexec/ottoman/ottoman-shell
 RUN chmod 0755 /usr/libexec/ottoman/*.sh /usr/libexec/ottoman/ottoman-shell \
     && systemctl enable ottoman-session.service \
