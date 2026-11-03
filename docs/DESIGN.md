@@ -212,7 +212,7 @@ the result. Build: `scripts/build-image.sh`, logs in `~/.local/share/claude-scra
 | M | Deliverable | Proof |
 |---|---|---|
 | M0 | this doc signed off | zerc's answers recorded |
-| M1 | bootc image boots to cage + Jellyfin Media Player on a VM and the Lenovo Tiny | boot time, idle RAM, 1080p H.264 direct-play measured on the Tiny. **2026-11-02: builds lint-clean, boots in QEMU to multi-user in 8.75 s; session unit failed with 200/CHDIR (no /var/home/ottoman, sysusers makes no homes; tmpfiles.d fix proven in-container, VM re-test pending a fresh dev disk)** |
+| M1 | bootc image boots to cage + Jellyfin Media Player on a VM and the Lenovo Tiny | boot time, idle RAM, 1080p H.264 direct-play measured on the Tiny. **VM half DONE 2026-11-02 23:4x:** QEMU boots to the cage kiosk with Jellyfin Desktop 2.0.0 on screen (screendump), session active with 0 restarts, 6.7 s to multi-user, 763 MB used with the app running, 38 running units; first boot installed app + runtimes from Flathub in 41 s; `bootc switch` from the local registry worked and left the previous deployment as rollback. **Tiny half pending** (ISO + real hardware) |
 | M2 | QML launcher: app grid, launch/exit Flatpaks, back-to-home | remote-only walkthrough, no keyboard |
 | M3 | inputd: CEC, IR, BT, phone remote | each path drives the M2 walkthrough |
 | M4 | web-app runner: YouTube TV, one Widevine site | playback + the quality cap shown |
@@ -223,7 +223,7 @@ the result. Build: `scripts/build-image.sh`, logs in `~/.local/share/claude-scra
 
 | Metric | Target | Where measured |
 |---|---|---|
-| Idle RAM at launcher | < 600 MB | real box, `free -m` after 5 min. **QEMU 2026-11-02: 438 MB used at multi-user with the session unit failing (no cage/app yet)** |
-| Cold boot to launcher | < 15 s on SATA SSD | `systemd-analyze` + stopwatch. **QEMU 2026-11-02: 8.75 s to multi-user (kernel 0.9 + initrd 3.0 + userspace 4.9); launcher not yet up** |
+| Idle RAM at launcher | < 600 MB | real box, `free -m` after 5 min. **QEMU 2026-11-02: 763 MB used with cage + Jellyfin Desktop (QtWebEngine) running; 438 MB without the compositor.** Over the target: the target was for the launcher alone, so it stands; a QtWebEngine app on top costs ~325 MB |
+| Cold boot to launcher | < 15 s on SATA SSD | `systemd-analyze` + stopwatch. **QEMU 2026-11-02: 6.7 s to multi-user on the second boot (kernel 0.6 + initrd 2.7 + userspace 3.4), 8.75 s on the first** |
 | Image size | < 3 GB | registry manifest. **M1 measured 2026-11-02: 3.23 GB** (base fedora-bootc:44 is 1.95 GB; 277 packages added, 832 total). Over target; trim is a later milestone |
-| Running services at idle | < 25 | `systemctl list-units --state=running` |
+| Running services at idle | < 25 | `systemctl list-units --state=running`. **QEMU 2026-11-02: 38 running units, over target; trim list is a later milestone** |

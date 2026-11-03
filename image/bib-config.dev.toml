@@ -26,4 +26,7 @@ insecure = true
 [[registry]]
 location = "<build-host>:18821"
 insecure = true
+[[registry]]
+location = "<build-host>:18821"
+insecure = true
 """
