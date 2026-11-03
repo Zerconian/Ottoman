@@ -12,8 +12,9 @@ Window {
     title: "Ottoman screensaver"
     property string mode: typeof saverMode !== "undefined" ? saverMode : "clock"
     function now() { return Qt.formatTime(new Date(), "HH:mm") }
-    // Any key or click ends it (a preview from Settings has no swayidle resume to kill it)
-    Item { anchors.fill: parent; focus: true; Keys.onPressed: Qt.quit(); MouseArea { anchors.fill: parent; onClicked: Qt.quit() } }
+    // Any key or click ends it (a preview from Settings has no swayidle resume to kill it). On RELEASE, not press:
+    // quitting on the press handed the same key's release to the launcher, which closed the Settings page (2026-11-03).
+    Item { anchors.fill: parent; focus: true; Keys.onReleased: function(e) { if (!e.isAutoRepeat) Qt.quit() }; MouseArea { anchors.fill: parent; onReleased: Qt.quit() } }
 
     // ---- aurora: five large radial blobs drifting and breathing over black
     Item {
@@ -25,7 +26,7 @@ Window {
                 property var palette: ["#1d4ed8", "#0e7490", "#6d28d9", "#0f766e", "#1e3a8a"]
                 property real size: Math.max(win.width, win.height) * (0.55 + 0.2 * (index % 3))
                 width: size; height: size
-                opacity: 0.28
+                opacity: 0.42
                 Canvas {
                     anchors.fill: parent
                     onPaint: { const c = getContext("2d"); const r = width / 2; const g = c.createRadialGradient(r, r, 0, r, r, r)
