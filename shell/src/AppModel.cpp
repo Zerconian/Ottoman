@@ -30,6 +30,7 @@ AppModel::AppModel(Sway *sway, QObject *parent) : QAbstractListModel(parent), m_
         {"Paramount+",  "org.mozilla.firefox", "org.mozilla.firefox", "#0064ff", {}, {}, "https://www.paramountplus.com/home/", "up to 1080p (Widevine L3)"},
         {"Crunchyroll", "org.mozilla.firefox", "org.mozilla.firefox", "#f47521", {}, {}, "https://www.crunchyroll.com/", "up to 1080p (Widevine L3)"},
         {"Prime Video", "org.mozilla.firefox", "org.mozilla.firefox", "#00a8e1", {}, {}, "https://www.primevideo.com/", "Linux browsers get SD/720p"},
+        {"Sling TV",    "org.mozilla.firefox", "org.mozilla.firefox", "#1d7cf2", {}, {}, "https://watch.sling.com/", "up to 1080p (Widevine L3)"},
         {"RetroArch", "org.libretro.RetroArch",        "org.libretro.RetroArch",        "#6f42c1", {}, {}, "", "", true},
         {"Steam Link","com.valvesoftware.SteamLink",   "com.valvesoftware.SteamLink",   "#1b2838", {}, {}, "", "", true},
         {"Kodi",      "tv.kodi.Kodi",                  "tv.kodi.Kodi",                  "#17b2e7"},
