@@ -13,7 +13,7 @@ ScreenSaverService::ScreenSaverService(Sway *sway, QObject *parent) : QObject(pa
     m_watcher.setWatchMode(QDBusServiceWatcher::WatchForUnregistration);
     connect(&m_watcher, &QDBusServiceWatcher::serviceUnregistered, this, [this](const QString &name) {
         const int before = m_holders.size();
-        for (auto it = m_holders.begin(); it != m_holders.end();) it = (it.value() == name) ? m_holders.erase(it) : it + 1;
+        for (auto it = m_holders.begin(); it != m_holders.end();) { if (it.value() == name) it = m_holders.erase(it); else ++it; }
         if (m_holders.size() != before) { qInfo() << "screensaver: holder left the bus, dropped" << before - m_holders.size() << "inhibit(s)"; m_watcher.removeWatchedService(name); apply(); }
     });
 }
