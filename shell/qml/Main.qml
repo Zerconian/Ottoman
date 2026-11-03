@@ -56,12 +56,13 @@ Window {
                     // Enter: tap launches, hold (600 ms) opens the tile menu; Menu/F2 opens it directly.
                     Timer { id: hold; interval: 600; onTriggered: { appsRow.held = true; appsRow.openMenu() } }
                     property bool held: false
+                    property bool pressedHere: false     // an Enter released here after an overlay consumed the press must not fire
                     Keys.onPressed: function(e) {
-                        if ((e.key === Qt.Key_Return || e.key === Qt.Key_Enter) && !e.isAutoRepeat) { held = false; hold.start(); e.accepted = true }
+                        if ((e.key === Qt.Key_Return || e.key === Qt.Key_Enter) && !e.isAutoRepeat) { held = false; pressedHere = true; hold.start(); e.accepted = true }
                         else if (e.key === Qt.Key_F2 || e.key === Qt.Key_Menu) { openMenu(); e.accepted = true }
                     }
                     Keys.onReleased: function(e) {
-                        if ((e.key === Qt.Key_Return || e.key === Qt.Key_Enter) && !e.isAutoRepeat) { hold.stop(); if (!held) activate(); e.accepted = true }
+                        if ((e.key === Qt.Key_Return || e.key === Qt.Key_Enter) && !e.isAutoRepeat) { hold.stop(); if (pressedHere && !held) activate(); pressedHere = false; e.accepted = true }
                     }
                     Keys.onDownPressed: focusRow(1)
                     Keys.onUpPressed: settingsBtn.forceActiveFocus()
