@@ -68,7 +68,10 @@ RUN if [ "$DEV" = 1 ]; then mkdir -p /etc/containers/registries.conf.d && printf
       '[[registry]]' 'location = "10.0.2.2:18821"' 'insecure = true' \
       '[[registry]]' 'location = "<build-host>:18821"' 'insecure = true' \
       '[[registry]]' 'location = "<build-host>:18821"' 'insecure = true' \
-      > /etc/containers/registries.conf.d/50-ottoman-dev.conf; fi
+      > /etc/containers/registries.conf.d/50-ottoman-dev.conf \
+    && printf 'zerc ALL=(ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/50-ottoman-dev && chmod 0440 /etc/sudoers.d/50-ottoman-dev; fi
+# (the dev login user itself comes from bib: image/bib-config.dev*.toml; bib's ISO path ignores customizations.files AND
+#  installer.sudo-nopasswd, measured 2026-11-03, so the sudo rule lives in the DEV image too)
 # Boot never waits on the network (zerc, 2026-11-03): NetworkManager-wait-online is off; nothing of ours is ordered
 # after network-online.target, and every wait Ottoman adds (first-boot Flatpak install 60 s, greenboot check 90 s) is bounded.
 # bootc's own lint: no content in /var, no world-writable surprises.

@@ -53,8 +53,10 @@ Rectangle {
         function onSetupProgress(name, state) { setRow(name, state) }
         function onSetupDone(failed) { setupFailed = failed; prefetchFinished = true; prefetching = false; system.log("firstrun setup done, failed " + failed); if (!page.setup) { message = failed === 0 ? "Default apps are ready." : failed + " app(s) failed to install, Continue shows which."; return } if (failed === 0) { system.markFirstRunDone(); done() } else { setupList.items = setupRows.concat([{label: "Retry the failed ones", value: "", action: "retry"}, {label: "Continue anyway", value: "", action: "finish"}]); setupList.currentIndex = setupList.items.length - 2 } }
     }
-    Component.onCompleted: { refresh(); if (visible) langList.forceActiveFocus() }     // initial visible=true never fires onVisibleChanged
-    onVisibleChanged: if (visible) { refresh(); (languageDone ? list : langList).forceActiveFocus() }
+    // First run is never "idle": the setup screen vanished behind the 5-minute screensaver on the ISO rehearsal (2026-11-03).
+    function holdIdle(on) { sway.command("[app_id=\"ottoman-shell\"] inhibit_idle " + (on ? "open" : "none")); system.log("firstrun idle inhibit " + (on ? "on" : "off")) }
+    Component.onCompleted: { refresh(); if (visible) { langList.forceActiveFocus(); holdIdle(true) } }     // initial visible=true never fires onVisibleChanged
+    onVisibleChanged: { holdIdle(visible); if (visible) { refresh(); (languageDone ? list : langList).forceActiveFocus() } }
     Text { text: page.setup ? "Setting up Ottoman" : "Welcome to Ottoman"; color: "#f2f2f2"; font.pixelSize: 44; font.bold: true; anchors { left: parent.left; top: parent.top; margins: 48 } }
     Text { text: page.setup ? "Installing the default apps from Flathub. This happens once." : (page.languageDone ? "Connect this box to your network. Everything else lives in Settings." : "Choose your language."); color: "#8a8f98"; font.pixelSize: 22; anchors { left: parent.left; top: parent.top; leftMargin: 48; topMargin: 118 } }
     OptionList { id: langList; visible: !page.languageDone && !page.setup; anchors { left: parent.left; right: parent.right; top: parent.top; bottom: parent.bottom; margins: 48; topMargin: 180; bottomMargin: 110 }
@@ -67,7 +69,7 @@ Rectangle {
         onActivated: function(i) { act(i) }
         onActiveFocusChanged: if (activeFocus && items[currentIndex]) system.log("firstrun focus " + currentIndex + " " + items[currentIndex].label)
         onCurrentIndexChanged: if (activeFocus && items[currentIndex]) system.log("firstrun option " + currentIndex + " " + items[currentIndex].label) }
-    Text { text: page.message.length ? page.message : (page.prefetching ? "Downloading the default apps in the background (" + page.prefetchDone + " of " + page.setupRows.length + " done). Continue whenever you like." : ""); color: "#d8dadf"; font.pixelSize: 22; anchors { left: parent.left; bottom: parent.bottom; margins: 48 } }
+    Text { text: page.message.length ? page.message : (page.prefetching && !page.setup ? "Downloading the default apps in the background (" + page.prefetchDone + " of " + page.setupRows.length + " done). Continue whenever you like." : ""); color: "#d8dadf"; font.pixelSize: 22; anchors { left: parent.left; bottom: parent.bottom; margins: 48 } }
     Rectangle { id: joinPanel; visible: false; anchors.fill: parent; color: "#e6101214"
         Column { anchors.centerIn: parent; spacing: 18
             Text { text: "Join " + page.joinSsid; color: "#f2f2f2"; font.pixelSize: 32; font.bold: true }

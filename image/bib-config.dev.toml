@@ -6,10 +6,4 @@ name = "zerc"
 groups = ["wheel"]
 key = "<dev-ssh-public-key>"
 
-# Passwordless sudo so the dev loop (bootc switch, journalctl) works over ssh without a tty. Dev disks only.
-[[customizations.files]]
-path = "/etc/sudoers.d/50-ottoman-dev"
-mode = "0440"
-data = "zerc ALL=(ALL) NOPASSWD: ALL\n"
-
-# The insecure dev-registry entry is baked into DEV=1 images (image/Containerfile), not added here.
+# Passwordless sudo for zerc and the insecure dev-registry entry are baked into DEV=1 images (image/Containerfile).
