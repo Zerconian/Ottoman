@@ -7,6 +7,7 @@
 #include "ItemModel.h"
 #include "System.h"
 #include "ScreenSaverService.h"
+#include "ShellControl.h"
 int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
     const bool saver = app.arguments().contains(QStringLiteral("--saver"));
@@ -22,6 +23,7 @@ int main(int argc, char *argv[]) {
     AppModel apps(&sway);
     Jellyfin jellyfin(&sway);
     ScreenSaverService screenSaver(&sway);
+    ShellControl control;
     System system;
     qmlRegisterUncreatableType<ItemModel>("Ottoman", 1, 0, "ItemModel", "provided by Jellyfin");
     QObject::connect(&jellyfin, &Jellyfin::needApp, &apps, [&] { apps.launchFlatpak(QStringLiteral("org.jellyfin.JellyfinDesktop")); });
@@ -31,6 +33,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty(QStringLiteral("apps"), &apps);
     engine.rootContext()->setContextProperty(QStringLiteral("jellyfin"), &jellyfin);
     engine.rootContext()->setContextProperty(QStringLiteral("system"), &system);
+    engine.rootContext()->setContextProperty(QStringLiteral("control"), &control);
     engine.loadFromModule("Ottoman", "Main");
     if (engine.rootObjects().isEmpty()) return 1;
     return app.exec();

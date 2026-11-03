@@ -19,7 +19,9 @@ Window {
     Component.onCompleted: system.applySavedModes()
     // Home (sway brings the shell forward, so the window becomes active): close overlays and go to the top of
     // the home screen, like Android TV. First run stays until done.
-    onActiveChanged: if (active) { settings.visible = false; addApp.visible = false; tileMenu.visible = false; signIn.visible = false; osk.visible = false; page.contentY = 0; appsRow.currentIndex = 0; focusRow(0); system.log("home reset") }
+    function goHome() { if (firstRun.visible) return; settings.visible = false; addApp.visible = false; tileMenu.visible = false; signIn.visible = false; osk.visible = false; page.contentY = 0; appsRow.currentIndex = 0; focusRow(0); system.log("home reset") }
+    onActiveChanged: if (active) goHome()
+    Connections { target: control; function onHomeRequested() { goHome() } }     // home.sh over D-Bus, works when already active
     Text { text: "OTTOMAN"; color: "#8a8f98"; font.pixelSize: 28; font.letterSpacing: 6; anchors { left: parent.left; top: parent.top; margins: 48 } }
     // Header bar: Up from the APPS row reaches Settings.
     Rectangle { id: settingsBtn; width: 170; height: 48; radius: 8; anchors { right: parent.right; top: parent.top; rightMargin: 48; topMargin: 118 }
@@ -55,14 +57,14 @@ Window {
                     delegate: Tile { label: model.name; tint: model.color; installed: model.installed; running: model.running; isAdd: model.isAdd; current: ListView.isCurrentItem
                         MouseArea { anchors.fill: parent; onClicked: { appsRow.currentIndex = index; appsRow.activate() } } }
                     function activate() { if (apps.isAddRow(currentIndex)) addApp.open(); else apps.launch(currentIndex) }
-                    function openMenu() { if (!apps.isAddRow(currentIndex)) tileMenu.open(currentIndex, apps.data(apps.index(currentIndex, 0), 257)) }
+                    function openMenu(held) { if (!apps.isAddRow(currentIndex)) tileMenu.open(currentIndex, apps.data(apps.index(currentIndex, 0), 257), held) }
                     // Enter: tap launches, hold (600 ms) opens the tile menu; Menu/F2 opens it directly.
-                    Timer { id: hold; interval: 600; onTriggered: { appsRow.held = true; appsRow.openMenu() } }
+                    Timer { id: hold; interval: 600; onTriggered: { appsRow.held = true; appsRow.openMenu(true) } }
                     property bool held: false
                     property bool pressedHere: false     // an Enter released here after an overlay consumed the press must not fire
                     Keys.onPressed: function(e) {
                         if ((e.key === Qt.Key_Return || e.key === Qt.Key_Enter) && !e.isAutoRepeat) { held = false; pressedHere = true; hold.start(); e.accepted = true }
-                        else if (e.key === Qt.Key_F2 || e.key === Qt.Key_Menu) { openMenu(); e.accepted = true }
+                        else if (e.key === Qt.Key_F2 || e.key === Qt.Key_Menu) { openMenu(false); e.accepted = true }
                     }
                     Keys.onReleased: function(e) {
                         if ((e.key === Qt.Key_Return || e.key === Qt.Key_Enter) && !e.isAutoRepeat) { hold.stop(); if (pressedHere && !held) activate(); pressedHere = false; e.accepted = true }
