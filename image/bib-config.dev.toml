@@ -12,21 +12,4 @@ path = "/etc/sudoers.d/50-ottoman-dev"
 mode = "0440"
 data = "zerc ALL=(ALL) NOPASSWD: ALL\n"
 
-[[customizations.directories]]
-path = "/etc/containers/registries.conf.d"
-
-[[customizations.files]]
-path = "/etc/containers/registries.conf.d/50-ottoman-dev.conf"
-mode = "0644"
-data = """
-# dev only: the build host's local registry as seen from QEMU user networking (10.0.2.2) and the LAN
-[[registry]]
-location = "10.0.2.2:18821"
-insecure = true
-[[registry]]
-location = "<build-host>:18821"
-insecure = true
-[[registry]]
-location = "<build-host>:18821"
-insecure = true
-"""
+# The insecure dev-registry entry is baked into DEV=1 images (image/Containerfile), not added here.

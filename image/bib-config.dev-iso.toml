@@ -1,0 +1,11 @@
+# bootc-image-builder customizations for the DEV installer ISO (TYPE=anaconda-iso). The ISO path ignores
+# customizations.files (measured 2026-11-03), so passwordless sudo comes from the installer table instead.
+# Never ship an ISO built with this.
+[[customizations.user]]
+name = "zerc"
+groups = ["wheel"]
+key = "<dev-ssh-public-key>"
+
+[customizations.installer]
+unattended = true
+sudo-nopasswd = ["zerc"]

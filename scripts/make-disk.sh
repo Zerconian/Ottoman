@@ -12,7 +12,8 @@ OUT=${2:-$(pwd)/build/disk}
 # registry on the build host's LAN address, reachable from QEMU user networking and from the Tiny alike.
 IMAGE_REF=${IMAGE_REF:-<build-host>:18821/ottoman:dev}
 TYPE=${TYPE:-qcow2}            # qcow2 | anaconda-iso | raw
-CONFIG=${CONFIG:-image/bib-config.dev.toml}   # CONFIG= (empty) for a clean disk
+# bib applies customizations.files only on the disk path; the ISO path takes [customizations.installer] instead.
+if [ "$TYPE" = anaconda-iso ]; then CONFIG=${CONFIG-image/bib-config.dev-iso.toml}; else CONFIG=${CONFIG-image/bib-config.dev.toml}; fi   # CONFIG= (empty) for a clean build
 ROOTFS=${ROOTFS:-xfs}
 if [ "$(id -u)" -ne 0 ]; then echo "run with sudo (bib needs privileged podman)" >&2; exit 2; fi
 mkdir -p "$OUT"
