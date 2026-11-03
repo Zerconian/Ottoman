@@ -30,14 +30,16 @@ RUN dnf -y install \
       flatpak xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-wlr sudo \
       dejavu-sans-fonts glibc-langpack-en \
       polkit dbus-daemon \
+      python3-evdev \
     && dnf clean all \
     && rm -rf /var/cache /var/log/dnf* /var/lib/dnf /run/dnf /run/selinux-policy /tmp/* \
     && rm -rf /var/lib/AccountsService /var/lib/flatpak /var/lib/geoclue
 
 COPY image/rootfs/ /
 COPY --from=shell-build /out/ottoman-shell /usr/libexec/ottoman/ottoman-shell
+COPY inputd/ottoman-inputd.py /usr/libexec/ottoman/ottoman-inputd
 RUN chmod 0755 /usr/libexec/ottoman/*.sh /usr/libexec/ottoman/ottoman-shell && chmod 0440 /etc/sudoers.d/ottoman && visudo -cf /etc/sudoers.d/ottoman \
-    && systemctl enable ottoman-session.service \
+    && chmod 0755 /usr/libexec/ottoman/ottoman-inputd && systemctl enable ottoman-session.service ottoman-inputd.service \
     && systemctl set-default multi-user.target
 
 # bootc's own lint: no content in /var, no world-writable surprises.

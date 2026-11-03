@@ -26,7 +26,7 @@ COMMON=(-accel kvm -cpu host -smp 4 -m "$MEM"
   -drive if=pflash,format=raw,readonly=on,file="$OVMF"
   -drive file="$OVERLAY",if=virtio,format=qcow2
   -device virtio-keyboard -device virtio-tablet
-  -netdev user,id=n0,hostfwd=tcp:127.0.0.1:18822-:22 -device virtio-net-pci,netdev=n0)   # ssh: scripts/vm-ssh.sh
+  -netdev user,id=n0,hostfwd=tcp:127.0.0.1:18822-:22,hostfwd=tcp:127.0.0.1:18824-:18820 -device virtio-net-pci,netdev=n0)   # ssh: scripts/vm-ssh.sh
 # Display device: qemu-system-x86-core splits display devices into modules; probe what this host has.
 pick_gpu() { for d in virtio-vga virtio-gpu-pci bochs-display; do qemu-system-x86_64 -device "$d,help" >/dev/null 2>&1 && { echo "$d"; return; }; done; echo VGA; }
 GPU=${GPU:-$(pick_gpu)}
@@ -40,7 +40,7 @@ if [ "${HEADLESS:-0}" = 1 ]; then
     -serial file:"$VMDIR/serial.log" \
     -pidfile "$VMDIR/qemu.pid" >"$VMDIR/qemu.out" 2>&1 < /dev/null &
   sleep 2
-  echo "qemu pid $(cat "$VMDIR/qemu.pid" 2>/dev/null || echo '?'), VNC 127.0.0.1:18820, ssh 127.0.0.1:18822, serial $VMDIR/serial.log, monitor $VMDIR/mon.sock"
+  echo "qemu pid $(cat "$VMDIR/qemu.pid" 2>/dev/null || echo '?'), VNC 127.0.0.1:18820, ssh 127.0.0.1:18822, phone remote http://127.0.0.1:18824, serial $VMDIR/serial.log, monitor $VMDIR/mon.sock"
 else
   # qemu-system-x86-core ships no window backend; gtk/sdl come from qemu-ui-gtk / qemu-ui-sdl.
   UI=""; for d in gtk sdl; do qemu-system-x86_64 -display help 2>/dev/null | command grep -qx "$d" && { UI=$d; break; }; done

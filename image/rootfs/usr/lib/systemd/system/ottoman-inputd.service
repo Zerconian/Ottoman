@@ -1,0 +1,11 @@
+[Unit]
+Description=Ottoman input daemon (phone web remote, gamepads -> uinput keys)
+After=network.target
+
+[Service]
+ExecStart=/usr/libexec/ottoman/ottoman-inputd
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
