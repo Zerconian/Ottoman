@@ -19,7 +19,7 @@ Window {
     Component.onCompleted: system.applySavedModes()
     // Home (sway brings the shell forward, so the window becomes active): close overlays and go to the top of
     // the home screen, like Android TV. First run stays until done.
-    onActiveChanged: if (active) { settings.visible = false; addApp.visible = false; tileMenu.visible = false; signIn.visible = false; osk.visible = false; page.contentY = 0; focusRow(0); system.log("home reset") }
+    onActiveChanged: if (active) { settings.visible = false; addApp.visible = false; tileMenu.visible = false; signIn.visible = false; osk.visible = false; page.contentY = 0; appsRow.currentIndex = 0; focusRow(0); system.log("home reset") }
     Text { text: "OTTOMAN"; color: "#8a8f98"; font.pixelSize: 28; font.letterSpacing: 6; anchors { left: parent.left; top: parent.top; margins: 48 } }
     // Header bar: Up from the APPS row reaches Settings.
     Rectangle { id: settingsBtn; width: 170; height: 48; radius: 8; anchors { right: parent.right; top: parent.top; rightMargin: 48; topMargin: 118 }

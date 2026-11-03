@@ -17,7 +17,9 @@ ListView {
     // A menu opened by HOLDING Enter must not act on that same key: swallow Enter until it is released.
     property bool ignoreEnterUntilRelease: false
     // Qt emits the specific onReturnPressed BEFORE the general onPressed, so the guard lives in the specific handlers.
-    Keys.onReleased: function(e) { if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { system.log("optlist release guard=" + ignoreEnterUntilRelease + " rep=" + e.isAutoRepeat); ignoreEnterUntilRelease = false } }
-    Keys.onReturnPressed: function(e) { system.log("optlist return guard=" + ignoreEnterUntilRelease + " rep=" + e.isAutoRepeat); if (ignoreEnterUntilRelease) { e.accepted = true; return } if (currentIndex >= 0) activated(currentIndex) }
+    // Qt's Wayland client emulates auto-repeat as release+press pairs flagged isAutoRepeat (measured 2026-11-03):
+    // only a REAL release ends the guard.
+    Keys.onReleased: function(e) { if ((e.key === Qt.Key_Return || e.key === Qt.Key_Enter) && !e.isAutoRepeat) ignoreEnterUntilRelease = false }
+    Keys.onReturnPressed: function(e) { if (ignoreEnterUntilRelease) { e.accepted = true; return } if (currentIndex >= 0) activated(currentIndex) }
     Keys.onEnterPressed: function(e) { if (ignoreEnterUntilRelease) { e.accepted = true; return } if (currentIndex >= 0) activated(currentIndex) }
 }
