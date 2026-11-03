@@ -212,7 +212,7 @@ the result. Build: `scripts/build-image.sh`, logs in `~/.local/share/claude-scra
 | M | Deliverable | Proof |
 |---|---|---|
 | M0 | this doc signed off | zerc's answers recorded |
-| M1 | bootc image boots to cage + Jellyfin Media Player on a VM and the Lenovo Tiny | boot time, idle RAM, 1080p H.264 direct-play measured on the Tiny |
+| M1 | bootc image boots to cage + Jellyfin Media Player on a VM and the Lenovo Tiny | boot time, idle RAM, 1080p H.264 direct-play measured on the Tiny. **2026-11-02: image builds, `bootc container lint` 14/14 clean, 3.23 GB; not yet booted** (qcow2 + VM need root tooling) |
 | M2 | QML launcher: app grid, launch/exit Flatpaks, back-to-home | remote-only walkthrough, no keyboard |
 | M3 | inputd: CEC, IR, BT, phone remote | each path drives the M2 walkthrough |
 | M4 | web-app runner: YouTube TV, one Widevine site | playback + the quality cap shown |
