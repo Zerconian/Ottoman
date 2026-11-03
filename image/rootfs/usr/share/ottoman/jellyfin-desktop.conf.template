@@ -1,0 +1,104 @@
+{
+    "sections": {
+        "appleremote": {
+            "emulatepht": true
+        },
+        "audio": {
+            "channels": "2.0",
+            "device": "auto",
+            "devicetype": "basic",
+            "exclusive": false,
+            "normalize": true,
+            "passthrough.ac3": false,
+            "passthrough.dts": false,
+            "passthrough.dts-hd": false,
+            "passthrough.eac3": false,
+            "passthrough.truehd": false
+        },
+        "cec": {
+            "activatesource": true,
+            "enable": true,
+            "hdmiport": 0,
+            "poweroffonstandby": false,
+            "suspendonstandby": false,
+            "usekeyupdown": false,
+            "verbose_logging": false
+        },
+        "main": {
+            "allowBrowserZoom": true,
+            "alwaysOnTop": false,
+            "autodetectCertBundle": true,
+            "checkForUpdates": false,
+            "disablemouse": false,
+            "enableInputRepeat": true,
+            "enableMPV": true,
+            "enableWindowsMediaIntegration": true,
+            "enableWindowsTaskbarIntegration": true,
+            "forceAlwaysFS": false,
+            "forceFSScreen": "",
+            "fullscreen": true,
+            "hdmi_poweron": false,
+            "ignoreSSLErrors": false,
+            "layout": "tv",
+            "logLevel": "info",
+            "minimizeOnDefocus": false,
+            "sdlEnabled": true,
+            "showPowerOptions": true,
+            "useOpenGL": false,
+            "useSystemVideoCodecs": false,
+            "userWebClient": "",
+            "webMode": "tv"
+        },
+        "other": {
+            "other_conf": ""
+        },
+        "path": {
+            "startupurl_desktop": "bundled",
+            "startupurl_extension": "bundled"
+        },
+        "subtitles": {
+            "ass_scale_border_and_shadow": true,
+            "ass_style_override": "",
+            "background_color": "",
+            "background_transparency": "",
+            "border_color": "",
+            "border_size": -1,
+            "color": "",
+            "font": "sans-serif",
+            "placement": "",
+            "size": -1
+        },
+        "system": {
+            "lircd_enabled": false,
+            "smbd_enabled": false,
+            "sshd_enabled": false,
+            "systemname": "JellyfinDesktop"
+        },
+        "video": {
+            "allow_transcode_to_hevc": false,
+            "always_force_transcode": false,
+            "aspect": "normal",
+            "audio_delay.24hz": 0,
+            "audio_delay.25hz": 0,
+            "audio_delay.50hz": 0,
+            "audio_delay.normal": 0,
+            "cache": 75,
+            "debug.force_vo": "",
+            "default_playback_speed": 1,
+            "deinterlace": false,
+            "force_transcode_4k": false,
+            "force_transcode_av1": false,
+            "force_transcode_dovi": true,
+            "force_transcode_hdr": false,
+            "force_transcode_hevc": false,
+            "force_transcode_hi10p": false,
+            "hardwareDecoding": "copy",
+            "prefer_transcode_to_h265": false,
+            "refreshrate.auto_switch": false,
+            "refreshrate.avoid_25hz_30hz": true,
+            "refreshrate.delay": 3,
+            "sync_mode": "audio"
+        }
+    },
+    "version": 7
+}

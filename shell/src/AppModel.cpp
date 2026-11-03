@@ -13,7 +13,7 @@ AppModel::AppModel(Sway *sway, QObject *parent) : QAbstractListModel(parent), m_
     m_apps = {
         // Order = zerc's priority (2026-11-03): Jellyfin > Plex > YouTube > Firefox (streaming tiles) > RetroArch, Steam Link > the rest.
         // byDefault (last field) = installed by the first-run setup screen, in this order.
-        {"Jellyfin",  "org.jellyfin.JellyfinDesktop",  "org.jellyfin.JellyfinDesktop",  "#00a4dc", {"--tv", "--fullscreen"}, {}, "", "", true},
+        {"Jellyfin",  "org.jellyfin.JellyfinDesktop",  "org.jellyfin.JellyfinDesktop",  "#00a4dc", {"--tv", "--fullscreen"}, {}, "", "", true, "/usr/libexec/ottoman/jellyfin.sh"},   // wrapper forces the TV web layout
         {"Plex",      "tv.plex.PlexHTPC",              "tv.plex.PlexHTPC",              "#e5a00d", {}, {}, "", "", true},
         // VacuumTube ships with --socket=x11 and the session has no XWayland: force Wayland (crashed in zypak otherwise, 2026-11-03).
         {"YouTube",   "rocks.shy.VacuumTube",          "rocks.shy.VacuumTube",          "#c4302b", {}, {"--nosocket=x11", "--socket=wayland"}, "", "", true},
@@ -94,11 +94,12 @@ void AppModel::launch(int row) {
     if (a.running) { qInfo() << "resume" << a.appId; m_sway->showApp(a.appId); return; }
     qInfo() << "launch" << a.name << a.flatpakId;
     if (!a.webUrl.isEmpty()) { QProcess::startDetached(QStringLiteral("/usr/libexec/ottoman/webapp.sh"), {a.name.toLower().remove(QRegularExpression("[^a-z0-9]")), a.webUrl}); return; }
+    if (!a.wrapper.isEmpty()) { QProcess::startDetached(a.wrapper, {}); return; }
     QProcess::startDetached(QStringLiteral("flatpak"), QStringList{QStringLiteral("--user"), QStringLiteral("run"), a.flatpakId} + a.args);
 }
 void AppModel::launchFlatpak(const QString &flatpakId) {
     for (int r = 0; r < m_rows.size(); ++r) if (m_apps[m_rows[r]].flatpakId == flatpakId) { launch(r); return; }
-    for (const AppEntry &a : m_apps) if (a.flatpakId == flatpakId && a.installed) { QProcess::startDetached(QStringLiteral("flatpak"), QStringList{QStringLiteral("--user"), QStringLiteral("run"), a.flatpakId} + a.args); return; }
+    for (const AppEntry &a : m_apps) if (a.flatpakId == flatpakId && a.installed) { if (!a.wrapper.isEmpty()) QProcess::startDetached(a.wrapper, {}); else QProcess::startDetached(QStringLiteral("flatpak"), QStringList{QStringLiteral("--user"), QStringLiteral("run"), a.flatpakId} + a.args); return; }
 }
 
 void AppModel::refresh() { refreshInstalled(); refreshRunning(); rebuildRows(); emit changed(); }
