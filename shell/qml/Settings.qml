@@ -4,6 +4,7 @@ import QtQuick
 Rectangle {
     id: page
     signal done()
+    signal previewRequested()   // Main keeps this page open when the window comes back from the preview
     anchors.fill: parent
     color: "#101214"
     property var sections: ["Network", "Display", "Audio", "Updates", "About"]
@@ -62,7 +63,7 @@ Rectangle {
         else if (it.action === "savermode") { const m = ["clock", "aurora", "stars"]; system.setSaverMode(m[(m.indexOf(it.mode) + 1) % m.length]); reload() }
         else if (it.action === "saverafter") { const c = [300, 600, 1800, 0]; system.setIdle(c[(c.indexOf(it.secs) + 1) % c.length], it.off); reload() }
         else if (it.action === "offafter") { const c = [1800, 3600, 0]; system.setIdle(it.secs, c[(c.indexOf(it.off) + 1) % c.length]); reload() }
-        else if (it.action === "preview") system.previewSaver()
+        else if (it.action === "preview") { previewRequested(); system.previewSaver() }
         else if (it.action === "check") system.updateCheck()
         else if (it.action === "apply") system.updateApply()
         else if (it.action === "rollback") system.rollback()

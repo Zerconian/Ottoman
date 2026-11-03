@@ -62,12 +62,12 @@ Window {
                 Rectangle {
                     property real seed: Math.random()
                     x: Math.random() * field.width; y: Math.random() * field.height
-                    width: 1 + Math.round(seed * 2); height: width; radius: width / 2
+                    width: 2 + Math.round(seed * 2); height: width; radius: width / 2
                     color: seed > 0.8 ? "#b8c4ff" : "#8a8f98"
                     SequentialAnimation on opacity { loops: Animation.Infinite
                         PauseAnimation { duration: seed * 6000 }
-                        NumberAnimation { from: 0.15; to: 0.25 + seed * 0.45; duration: 1500 + seed * 3000; easing.type: Easing.InOutSine }
-                        NumberAnimation { to: 0.15; duration: 1500 + seed * 3000; easing.type: Easing.InOutSine } }
+                        NumberAnimation { from: 0.2; to: 0.4 + seed * 0.5; duration: 1500 + seed * 3000; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 0.2; duration: 1500 + seed * 3000; easing.type: Easing.InOutSine } }
                 }
             }
         }

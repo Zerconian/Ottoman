@@ -20,7 +20,10 @@ Window {
     // Home (sway brings the shell forward, so the window becomes active): close overlays and go to the top of
     // the home screen, like Android TV. First run stays until done.
     function goHome() { if (firstRun.visible) return; settings.visible = false; addApp.visible = false; tileMenu.visible = false; signIn.visible = false; osk.visible = false; page.contentY = 0; appsRow.currentIndex = 0; focusRow(0); system.log("home reset") }
-    onActiveChanged: if (active) goHome()
+    // Regaining the window after an app or the screensaver returns to Home, except right after a screensaver preview
+    // from Settings (the page stays open so the next mode can be tried; measured 2026-11-03).
+    property bool keepOnActivate: false
+    onActiveChanged: if (active) { if (keepOnActivate) keepOnActivate = false; else goHome() }
     Connections { target: control; function onHomeRequested() { goHome() } }     // home.sh over D-Bus, works when already active
     Text { text: "OTTOMAN"; color: "#8a8f98"; font.pixelSize: 28; font.letterSpacing: 6; anchors { left: parent.left; top: parent.top; margins: 48 } }
     // Header bar: Up from the APPS row reaches Settings.
@@ -117,7 +120,7 @@ Window {
     Connections { target: jellyfin; function onChanged() { if (!signIn.visible && !settings.visible && !osk.visible && !firstRun.visible && !tileMenu.visible && !addApp.visible) Qt.callLater(function() { focusRow(rowIndex) }) } }
     ListModel { id: signInModel; ListElement { name: "Sign in to Jellyfin"; subtitle: "Enter to connect your server"; imageUrl: ""; progress: 0 } }
     SignIn { id: signIn; visible: false; z: 50; onVisibleChanged: { if (!visible) focusRow(rowIndex); system.log("signin " + (visible ? "open" : "close")) } onDone: visible = false }
-    Settings { id: settings; visible: false; z: 50; onDone: { visible = false; focusRow(rowIndex) } }
+    Settings { id: settings; visible: false; z: 50; onPreviewRequested: win.keepOnActivate = true; onDone: { visible = false; focusRow(rowIndex) } }
     TileMenu { id: tileMenu; visible: false; z: 55; onDone: focusRow(0) }
     AddApp { id: addApp; visible: false; z: 55; onDone: focusRow(0) }
     FirstRun { id: firstRun; visible: !system.firstRunDone(); z: 60; onDone: { visible = false; focusRow(0); system.log("firstrun done") } }
