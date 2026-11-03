@@ -233,6 +233,7 @@ exact wording is not in the serial log (installer text goes to the VGA console).
 installer boot to identify it; it belongs to the anaconda ISO, not the installed system.
 
 ### 4.12 UI polish log
+- 2026-11-03 (zerc): tiles carry art instead of flat colour. Installed Flatpaks show their own exported icon (`~/.local/share/flatpak/exports/share/icons/hicolor/<size>/apps/<id>`), which is what that icon ships for; web apps (Netflix, Disney+, Max) get a custom monogram roundel in the service colour, never the service's own mark (zerc: "I know copyright is a pain point"). Names sit below the art.
 - 2026-11-03 (zerc, from a screenshot): the focus outline was clipped top/left (tiles scale 6% inside a clipped row starting at its edge: rows now have 12 px inner margins) and a second row showed a highlight without focus (`ListView.isCurrentItem` alone: now `&& row.activeFocus`, so only the item being interacted with is highlighted).
 
 ## 6a. Build and test tooling (<build-host>, 2026-11-02)
