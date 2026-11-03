@@ -21,7 +21,7 @@ Rectangle {
     }
     function act(i) {
         const it = list.items[i]; if (!it || !it.action) return
-        if (it.action === "done") { startSetup() }
+        if (it.action === "done") { page.startSetup() }
         else if (it.action === "refresh") refresh()
         else if (it.action === "scan") { message = "Scanning..."; wifi = system.wifiList(); build(); message = wifi.length + " networks" }
         else if (it.action === "join") { if (it.security) { joinSsid = it.ssid; joinPass.text = ""; joinPanel.visible = true; joinPass.inputItem.forceActiveFocus() } else system.wifiJoin(it.ssid, "") }
@@ -29,6 +29,16 @@ Rectangle {
     Connections { target: system
         function onJoined(ok, text) { message = text; joinPanel.visible = false; refresh(); list.forceActiveFocus() }
         function onBusyChanged() { if (system.busyText.length) message = system.busyText + "..." }
+    }
+    // Step 2: install the default apps one by one with visible status, then the launcher (zerc, 2026-11-03).
+    property bool setup: false
+    property var setupRows: []
+    property int setupFailed: -1
+    function startSetup() { setup = true; setupRows = apps.defaults().map(function(d) { return {label: d.name, value: d.installed ? "already installed" : "waiting"} }); setupList.items = setupRows; setupList.currentIndex = 0; setupList.forceActiveFocus(); system.log("firstrun setup start"); apps.installDefaults() }
+    function setRow(name, state) { const r = setupRows.slice(); for (const x of r) if (x.label === name) x.value = state === "installing" ? "installing..." : state === "skipped" ? "already installed" : state; setupRows = r; setupList.items = r }
+    Connections { target: apps
+        function onSetupProgress(name, state) { setRow(name, state) }
+        function onSetupDone(failed) { setupFailed = failed; system.log("firstrun setup done, failed " + failed); if (failed === 0) { system.markFirstRunDone(); done() } else { setupList.items = setupRows.concat([{label: "Retry the failed ones", value: "", action: "retry"}, {label: "Continue anyway", value: "", action: "finish"}]); setupList.currentIndex = setupList.items.length - 2 } }
     }
     Component.onCompleted: { refresh(); if (visible) list.forceActiveFocus() }     // initial visible=true never fires onVisibleChanged
     onVisibleChanged: if (visible) { refresh(); list.forceActiveFocus() }
