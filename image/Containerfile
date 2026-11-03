@@ -31,6 +31,7 @@ RUN dnf -y install \
       dejavu-sans-fonts glibc-langpack-en \
       polkit dbus-daemon \
       python3-evdev \
+      greenboot greenboot-default-health-checks \
     && dnf clean all \
     && rm -rf /var/cache /var/log/dnf* /var/lib/dnf /run/dnf /run/selinux-policy /tmp/* \
     && rm -rf /var/lib/AccountsService /var/lib/flatpak /var/lib/geoclue
@@ -39,7 +40,7 @@ COPY image/rootfs/ /
 COPY --from=shell-build /out/ottoman-shell /usr/libexec/ottoman/ottoman-shell
 COPY inputd/ottoman-inputd.py /usr/libexec/ottoman/ottoman-inputd
 RUN chmod 0755 /usr/libexec/ottoman/*.sh /usr/libexec/ottoman/ottoman-shell && chmod 0440 /etc/sudoers.d/ottoman && visudo -cf /etc/sudoers.d/ottoman \
-    && chmod 0755 /usr/libexec/ottoman/ottoman-inputd && systemctl enable ottoman-session.service ottoman-inputd.service \
+    && chmod 0755 /usr/libexec/ottoman/ottoman-inputd && chmod 0755 /etc/greenboot/check/required.d/*.sh && systemctl enable ottoman-session.service ottoman-inputd.service greenboot-healthcheck.service greenboot-set-rollback-trigger.service \
     && systemctl set-default multi-user.target
 
 # bootc's own lint: no content in /var, no world-writable surprises.
