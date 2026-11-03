@@ -21,7 +21,7 @@ Rectangle {
             if (!st.wifiAvailable) items.push({label: "Wi-Fi", value: "No Wi-Fi adapter"})
             else { items.push({label: "Scan for Wi-Fi networks", value: "", action: "scan"}); for (const w of (page.wifi || [])) items.push({label: (w.active ? "✓ " : "") + w.ssid, value: w.signal + "%  " + (w.security || "open"), action: "join", ssid: w.ssid, security: w.security}) }
         } else if (section === 1) {
-            for (const o of system.outputs()) { items.push({label: o.name + "  " + o.make, value: o.current}); for (const m of o.modes) items.push({label: "    " + m, value: m === o.current ? "current" : "", action: "mode", output: o.name, mode: m, previous: o.current}) }
+            for (const o of system.outputs()) { items.push({label: o.name + "  " + o.make, value: o.currentLabel}); for (const m of o.modes) items.push({label: "    " + m.label, value: m.value === o.current ? "current" : "", action: "mode", output: o.name, mode: m.value, previous: o.current}) }
             if (items.length === 0) items.push({label: "No display found", value: ""})
         } else if (section === 2) {
             const s = system.sinks()
@@ -52,7 +52,7 @@ Rectangle {
         const it = options.items[i]; if (!it || !it.action) return
         if (it.action === "scan") { message = "Scanning..."; wifi = system.wifiList(); reload(); message = wifi.length + " networks" }
         else if (it.action === "join") { if (it.security) { joinSsid = it.ssid; joinPass.text = ""; joinPanel.visible = true; joinPass.inputItem.forceActiveFocus() } else system.wifiJoin(it.ssid, "") }
-        else if (it.action === "mode") { pendingMode = {output: it.output, mode: it.mode, previous: it.previous}; if (system.setMode(it.output, it.mode)) { revertLeft = 10; revertTimer.start(); message = "Keeping this mode? Enter to keep, reverting in 10 s" } else message = "Could not set " + it.mode }
+        else if (it.action === "mode") { if (it.mode === it.previous) return; if (system.setMode(it.output, it.mode)) { pendingMode = {output: it.output, mode: it.mode, previous: it.previous}; revertLeft = 10; revertTimer.start(); message = "Keeping this mode? Enter to keep, reverting in 10 s" } else { pendingMode = null; message = "Could not set " + it.label.trim() } }
         else if (it.action === "sink") { system.setDefaultSink(it.id); reload() }
         else if (it.action === "check") system.updateCheck()
         else if (it.action === "apply") system.updateApply()
@@ -62,7 +62,7 @@ Rectangle {
     }
     Timer { id: revertTimer; interval: 1000; repeat: true
         onTriggered: { revertLeft--; message = "Keeping this mode? Enter to keep, reverting in " + revertLeft + " s"; if (revertLeft <= 0) { stop(); system.setMode(pendingMode.output, pendingMode.previous); pendingMode = null; message = "Reverted"; reload() } } }
-    function keepMode() { if (!pendingMode) return false; revertTimer.stop(); system.saveMode(pendingMode.output, pendingMode.mode); pendingMode = null; message = "Mode saved"; reload(); return true }
+    function keepMode() { if (!pendingMode || section !== 1) return false; revertTimer.stop(); system.saveMode(pendingMode.output, pendingMode.mode); pendingMode = null; message = "Mode saved"; reload(); return true }
     Connections { target: system
         function onUpdateResult(ok, text) { message = text; reload() }
         function onJoined(ok, text) { message = text; joinPanel.visible = false; wifi = system.wifiList(); reload() }

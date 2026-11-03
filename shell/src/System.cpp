@@ -16,8 +16,9 @@ QByteArray System::run(const QString &prog, const QStringList &args, int timeout
     const bool fin = p.waitForFinished(timeoutMs);
     const bool good = fin && p.exitCode() == 0;
     if (ok) *ok = good;
-    if (!good) qWarning().noquote() << "system:" << prog << args.join(' ') << "failed:" << (fin ? QString::fromUtf8(p.readAllStandardError()).simplified().left(200) : QStringLiteral("timeout"));
-    return p.readAllStandardOutput();
+    const QByteArray out = p.readAllStandardOutput();
+    if (!good) qWarning().noquote() << "system:" << prog << args.join(' ') << "failed:" << (fin ? QString::fromUtf8(p.readAllStandardError() + out).simplified().left(200) : QStringLiteral("timeout"));
+    return out;
 }
 
 void System::runAsync(const QString &label, const QString &prog, const QStringList &args, std::function<void(bool, const QString &)> done) {
@@ -41,15 +42,18 @@ QVariantList System::outputs() const {
     for (const QJsonValue &v : arr) {
         const QJsonObject o = v.toObject();
         const QJsonObject cm = o.value("current_mode").toObject();
-        QStringList modes; QSet<QString> seen;
+        // value "1920x1080@59.940Hz" is what `swaymsg output NAME mode` accepts (Hz suffix required, measured 2026-11-03);
+        // label "1920x1080@60" is what the user sees.
+        auto modeOf = [](const QJsonObject &mo) { return QStringLiteral("%1x%2@%3Hz").arg(mo.value("width").toInt()).arg(mo.value("height").toInt()).arg(mo.value("refresh").toInt() / 1000.0, 0, 'f', 3); };
+        auto labelOf = [](const QJsonObject &mo) { return QStringLiteral("%1x%2@%3").arg(mo.value("width").toInt()).arg(mo.value("height").toInt()).arg(qRound(mo.value("refresh").toInt() / 1000.0)); };
+        QVariantList modes; QSet<QString> seen;
         for (const QJsonValue &m : o.value("modes").toArray()) {
             const QJsonObject mo = m.toObject();
-            const QString s = QStringLiteral("%1x%2@%3").arg(mo.value("width").toInt()).arg(mo.value("height").toInt()).arg(qRound(mo.value("refresh").toInt() / 1000.0));
-            if (!seen.contains(s)) { seen.insert(s); modes << s; }
+            const QString v = modeOf(mo);
+            if (!seen.contains(v)) { seen.insert(v); modes << QVariantMap{{"value", v}, {"label", labelOf(mo)}}; }
         }
         res << QVariantMap{{"name", o.value("name").toString()}, {"make", o.value("make").toString() + " " + o.value("model").toString()},
-                           {"current", QStringLiteral("%1x%2@%3").arg(cm.value("width").toInt()).arg(cm.value("height").toInt()).arg(qRound(cm.value("refresh").toInt() / 1000.0))},
-                           {"modes", modes}};
+                           {"current", modeOf(cm)}, {"currentLabel", labelOf(cm)}, {"modes", modes}};
     }
     return res;
 }
