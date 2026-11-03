@@ -14,6 +14,10 @@ ListView {
         Text { text: list.items[index].value || ""; color: "#8a8f98"; font.pixelSize: 22; anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 18 } }
         MouseArea { anchors.fill: parent; onClicked: { list.currentIndex = index; list.activated(index) } }
     }
+    // A menu opened by HOLDING Enter must not act on that same key: swallow Enter until it is released.
+    property bool ignoreEnterUntilRelease: false
+    Keys.onPressed: function(e) { if (ignoreEnterUntilRelease && (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)) e.accepted = true }
+    Keys.onReleased: function(e) { if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) ignoreEnterUntilRelease = false }
     Keys.onReturnPressed: if (currentIndex >= 0) activated(currentIndex)
     Keys.onEnterPressed: if (currentIndex >= 0) activated(currentIndex)
 }
