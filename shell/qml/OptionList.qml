@@ -16,8 +16,8 @@ ListView {
     }
     // A menu opened by HOLDING Enter must not act on that same key: swallow Enter until it is released.
     property bool ignoreEnterUntilRelease: false
-    Keys.onPressed: function(e) { if (ignoreEnterUntilRelease && (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)) e.accepted = true }
+    // Qt emits the specific onReturnPressed BEFORE the general onPressed, so the guard lives in the specific handlers.
     Keys.onReleased: function(e) { if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) ignoreEnterUntilRelease = false }
-    Keys.onReturnPressed: if (currentIndex >= 0) activated(currentIndex)
-    Keys.onEnterPressed: if (currentIndex >= 0) activated(currentIndex)
+    Keys.onReturnPressed: function(e) { if (ignoreEnterUntilRelease) { e.accepted = true; return } if (currentIndex >= 0) activated(currentIndex) }
+    Keys.onEnterPressed: function(e) { if (ignoreEnterUntilRelease) { e.accepted = true; return } if (currentIndex >= 0) activated(currentIndex) }
 }
