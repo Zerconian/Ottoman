@@ -224,7 +224,7 @@ a hardware brand) or pick another.
 Ottoman block **18820-18829**. Taken nearby: 18790-18792 RailgunRun; 18800-18809 claimed by the <private-domain> redesign brain, and zerc says 18800 is Panoptes (2026-11-02; the Panoptes brain records 9600 on Citadel). Either way Ottoman stays clear of 1880x. 18820 phone
 remote + local settings web UI, 18821 shell API. Bind failure is fatal, never hop.
 
-### 4.11a Quiet boot (zerc, 2026-11-03) *[proven 21:1x UTC on the VM: frames every 2 s through a reboot showed firmware logo, one grub line, the Plymouth spinner, then the launcher at 9.4 s; no kernel or systemd text; greenboot healthy on the 265 MB regenerated initramfs]*
+### 4.11a Quiet boot (zerc, 2026-11-03) *[proven 21:17 UTC on the VM, second pass with branding: grub line reads "Booting Ottoman", Plymouth shows the OTTOMAN wordmark over the spinner, initramfs 238 MB after trimming; first pass 21:1x UTC: frames every 2 s through a reboot showed firmware logo, one grub line, the Plymouth spinner, then the launcher at 9.4 s; no kernel or systemd text; greenboot healthy on the 265 MB regenerated initramfs]*
 Power-on to launcher shows no grub menu (hidden, zero timeout, Shift opens it), no kernel or systemd
 text (`quiet loglevel=3 splash rhgb systemd.show_status=0 vt.global_cursor_off=1`), a Plymouth spinner
 from the initramfs (regenerated in the image build with the plymouth module) until the session takes the
