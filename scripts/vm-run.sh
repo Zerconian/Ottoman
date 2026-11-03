@@ -26,7 +26,7 @@ COMMON=(-accel kvm -cpu host -smp 4 -m "$MEM"
   -drive if=pflash,format=raw,readonly=on,file="$OVMF"
   -drive file="$OVERLAY",if=virtio,format=qcow2
   -device virtio-keyboard -device virtio-tablet
-  -netdev user,id=n0 -device virtio-net-pci,netdev=n0)
+  -netdev user,id=n0,hostfwd=tcp:127.0.0.1:18822-:22 -device virtio-net-pci,netdev=n0)   # ssh: scripts/vm-ssh.sh
 # Display device: qemu-system-x86-core splits display devices into modules; probe what this host has.
 pick_gpu() { for d in virtio-vga virtio-gpu-pci bochs-display; do qemu-system-x86_64 -device "$d,help" >/dev/null 2>&1 && { echo "$d"; return; }; done; echo VGA; }
 GPU=${GPU:-$(pick_gpu)}
@@ -40,7 +40,7 @@ if [ "${HEADLESS:-0}" = 1 ]; then
     -serial file:"$VMDIR/serial.log" \
     -pidfile "$VMDIR/qemu.pid" >"$VMDIR/qemu.out" 2>&1 < /dev/null &
   sleep 2
-  echo "qemu pid $(cat "$VMDIR/qemu.pid" 2>/dev/null || echo '?'), VNC 127.0.0.1:18820, serial $VMDIR/serial.log, monitor $VMDIR/mon.sock"
+  echo "qemu pid $(cat "$VMDIR/qemu.pid" 2>/dev/null || echo '?'), VNC 127.0.0.1:18820, ssh 127.0.0.1:18822, serial $VMDIR/serial.log, monitor $VMDIR/mon.sock"
 else
   exec qemu-system-x86_64 "${COMMON[@]}" \
     -device "$GPU" -display gtk \
