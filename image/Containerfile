@@ -1,5 +1,12 @@
 # Ottoman OS image, milestone M1: boots to a Wayland kiosk running Jellyfin Media Player.
 # Base follows the host Fedora release (<build-host> is on 44). Bump deliberately, never "latest".
+# Stage 1: compile the launcher (ottoman-shell) with the same Fedora release's Qt.
+FROM quay.io/fedora/fedora:44 AS shell-build
+RUN dnf -y install cmake ninja-build gcc-c++ qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtwayland-devel && dnf clean all
+COPY shell/ /src/
+RUN cmake -S /src -B /out -G Ninja -DCMAKE_BUILD_TYPE=Release && cmake --build /out
+
+# Stage 2: the OS image.
 FROM quay.io/fedora/fedora-bootc:44
 
 # RPM Fusion: Fedora proper ships no Intel VA-API drivers and strips H.264/HEVC from mesa's VA-API.
@@ -16,6 +23,7 @@ RUN dnf -y install \
 # the floor-tier Haswell box (HD 4400) needs the legacy i965 driver (libva-intel-driver).
 RUN dnf -y install \
       sway foot \
+      qt6-qtdeclarative qt6-qtwayland qt6-qtsvg \
       mesa-dri-drivers mesa-vulkan-drivers libva-intel-driver intel-media-driver libva-utils \
       pipewire pipewire-alsa pipewire-pulseaudio wireplumber \
       NetworkManager NetworkManager-wifi \
@@ -27,7 +35,8 @@ RUN dnf -y install \
     && rm -rf /var/lib/AccountsService /var/lib/flatpak /var/lib/geoclue
 
 COPY rootfs/ /
-RUN chmod 0755 /usr/libexec/ottoman/session.sh \
+COPY --from=shell-build /out/ottoman-shell /usr/libexec/ottoman/ottoman-shell
+RUN chmod 0755 /usr/libexec/ottoman/*.sh /usr/libexec/ottoman/ottoman-shell \
     && systemctl enable ottoman-session.service \
     && systemctl set-default multi-user.target
 

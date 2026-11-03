@@ -19,9 +19,5 @@ if ! flatpak --user info "$APP" >/dev/null 2>&1; then
     || log "install of $APP failed"
 fi
 
-if flatpak --user info "$APP" >/dev/null 2>&1; then
-  exec flatpak --user run "$APP" --fullscreen
-fi
-
-log "falling back to a terminal"
-exec foot
+# The launcher (shell.sh) runs apps from here on; this script only provisions.
+log "provisioning done"
