@@ -49,10 +49,20 @@ Window {
                 ListView {
                     id: appsRow; width: win.width - 48; height: 190; orientation: ListView.Horizontal; spacing: 24; clip: true
                     model: apps; focus: true; highlightMoveDuration: 0; preferredHighlightBegin: 0; preferredHighlightEnd: width - 60; highlightRangeMode: ListView.ApplyRange
-                    delegate: Tile { label: model.name; tint: model.color; installed: model.installed; running: model.running; current: ListView.isCurrentItem
-                        MouseArea { anchors.fill: parent; onClicked: { appsRow.currentIndex = index; apps.launch(index) } } }
-                    Keys.onReturnPressed: apps.launch(currentIndex)
-                    Keys.onEnterPressed: apps.launch(currentIndex)
+                    delegate: Tile { label: model.name; tint: model.color; installed: model.installed; running: model.running; isAdd: model.isAdd; current: ListView.isCurrentItem
+                        MouseArea { anchors.fill: parent; onClicked: { appsRow.currentIndex = index; appsRow.activate() } } }
+                    function activate() { if (apps.isAddRow(currentIndex)) addApp.open(); else apps.launch(currentIndex) }
+                    function openMenu() { if (!apps.isAddRow(currentIndex)) tileMenu.open(currentIndex, apps.data(apps.index(currentIndex, 0), 257)) }
+                    // Enter: tap launches, hold (600 ms) opens the tile menu; Menu/F2 opens it directly.
+                    Timer { id: hold; interval: 600; onTriggered: { appsRow.held = true; appsRow.openMenu() } }
+                    property bool held: false
+                    Keys.onPressed: function(e) {
+                        if ((e.key === Qt.Key_Return || e.key === Qt.Key_Enter) && !e.isAutoRepeat) { held = false; hold.start(); e.accepted = true }
+                        else if (e.key === Qt.Key_F2 || e.key === Qt.Key_Menu) { openMenu(); e.accepted = true }
+                    }
+                    Keys.onReleased: function(e) {
+                        if ((e.key === Qt.Key_Return || e.key === Qt.Key_Enter) && !e.isAutoRepeat) { hold.stop(); if (!held) activate(); e.accepted = true }
+                    }
                     Keys.onDownPressed: focusRow(1)
                     Keys.onUpPressed: settingsBtn.forceActiveFocus()
                 }
@@ -98,10 +108,12 @@ Window {
     // Row models swap when Jellyfin connects or signs out, which drops keyboard focus: re-focus the current row.
     // Re-focus the home rows after a Jellyfin state change, but never steal focus from an open overlay
     // (signing out from Settings > About used to drop focus behind the Settings page).
-    Connections { target: jellyfin; function onChanged() { if (!signIn.visible && !settings.visible && !osk.visible && !firstRun.visible) Qt.callLater(function() { focusRow(rowIndex) }) } }
+    Connections { target: jellyfin; function onChanged() { if (!signIn.visible && !settings.visible && !osk.visible && !firstRun.visible && !tileMenu.visible && !addApp.visible) Qt.callLater(function() { focusRow(rowIndex) }) } }
     ListModel { id: signInModel; ListElement { name: "Sign in to Jellyfin"; subtitle: "Enter to connect your server"; imageUrl: ""; progress: 0 } }
     SignIn { id: signIn; visible: false; z: 50; onVisibleChanged: { if (!visible) focusRow(rowIndex); system.log("signin " + (visible ? "open" : "close")) } onDone: visible = false }
     Settings { id: settings; visible: false; z: 50; onDone: { visible = false; focusRow(rowIndex) } }
+    TileMenu { id: tileMenu; visible: false; z: 55; onDone: focusRow(0) }
+    AddApp { id: addApp; visible: false; z: 55; onDone: focusRow(0) }
     FirstRun { id: firstRun; visible: !system.firstRunDone(); z: 60; onDone: { visible = false; focusRow(0); system.log("firstrun done") } }
     // On-screen keyboard overlay, shared by every Field.
     Item { id: osk; anchors.fill: parent; visible: false; z: 100
