@@ -42,8 +42,11 @@ if [ "${HEADLESS:-0}" = 1 ]; then
   sleep 2
   echo "qemu pid $(cat "$VMDIR/qemu.pid" 2>/dev/null || echo '?'), VNC 127.0.0.1:18820, ssh 127.0.0.1:18822, serial $VMDIR/serial.log, monitor $VMDIR/mon.sock"
 else
+  # qemu-system-x86-core ships no window backend; gtk/sdl come from qemu-ui-gtk / qemu-ui-sdl.
+  UI=""; for d in gtk sdl; do qemu-system-x86_64 -display help 2>/dev/null | command grep -qx "$d" && { UI=$d; break; }; done
+  [ -n "$UI" ] || { echo "no window backend: sudo dnf install qemu-ui-gtk   (or use HEADLESS=1 and a VNC viewer on 127.0.0.1:18820)" >&2; exit 2; }
   exec qemu-system-x86_64 "${COMMON[@]}" \
-    -device "$GPU" -display gtk \
+    -device "$GPU" -display "$UI" \
     -audiodev pipewire,id=a0 -device intel-hda -device hda-output,audiodev=a0 \
     -serial mon:stdio
 fi
