@@ -106,9 +106,11 @@ Detail: memory `project_landscape_2026-11.md`.
 - Flatpak only. Two tiers: **TV-ready** (we test D-pad/remote navigation, launch args, exit
   behaviour; shown in the store UI) and **Everything else** (Flathub search behind a toggle, with
   "untested with a remote" on each card).
-- TV-ready seed list: Jellyfin Media Player, Plex HTPC, Kodi, Emby Theater (no official Flatpak;
-  we may have to package it), Moonlight, RetroArch, Steam (optional tier, needs the gaming GPU
-  path), Firefox or Chromium (keyboard-ish; "with a remote this is rough").
+- TV-ready seed list (Flathub IDs confirmed live 2026-11-02): Jellyfin Media Player
+  `com.github.iwalton3.jellyfin-media-player` (1.12.0), Plex HTPC `tv.plex.PlexHTPC`, Kodi
+  `tv.kodi.Kodi`, RetroArch `org.libretro.RetroArch`, Steam Link `com.valvesoftware.SteamLink`,
+  Moonlight `com.moonlight_stream.Moonlight`. Emby Theater has no official Flatpak; we may have to
+  package it. Browser: Firefox or Chromium, labelled "rough with a remote".
 
 ### 4.5 YouTube and streaming wrappers: one web-app runner (decided, delegated 2026-11-02)
 - `ottoman-webapp`: a Chromium-based (or WebKitGTK; measure Widevine availability) kiosk runner that
@@ -132,6 +134,8 @@ Core i3-4130T/4150T/4160T and HD Graphics 4400 (Lenovo's M73 Tiny spec sheet lis
 *[to confirm: `lscpu | grep 'Model name'` on the box, or the model label.]*
 
 What Haswell means, from Intel's media capabilities (not the search engine's guess):
+- VA-API driver: Haswell needs the legacy **i965** driver (`libva-intel-driver`); the modern iHD
+  driver (`intel-media-driver`) starts at Broadwell. The image ships both and libva picks per GPU.
 - Hardware decode: H.264 (and MPEG-2, VC-1) via VA-API. **No HEVC, no VP9, no AV1** in hardware;
   those decode in software. 2c/4t handles 1080p HEVC 8-bit in software at best; 4K HEVC does not play.
 - Output: HDMI 1.4a (4K at 30 Hz) and DisplayPort 1.2 (4K at 60 Hz). **No HDR.**
@@ -192,6 +196,16 @@ a hardware brand) or pick another.
 
 Ottoman block **18820-18829**. Taken nearby: 18790-18792 RailgunRun; 18800-18809 claimed by the <private-domain> redesign brain, and zerc says 18800 is Panoptes (2026-11-02; the Panoptes brain records 9600 on Citadel). Either way Ottoman stays clear of 1880x. 18820 phone
 remote + local settings web UI, 18821 shell API. Bind failure is fatal, never hop.
+
+## 6a. Build and test tooling (<build-host>, 2026-11-02)
+
+Present: podman 5.8.9, Fedora 44, 598 GB free, 16 threads, 31 GB RAM. Base image
+`quay.io/fedora/fedora-bootc:44` (tags 43-46 exist; 44 matches the host, rebuilt daily). Fedora 44
+packages: cage 0.3.1, gamescope 3.16.x, libcec 7.1.1, intel-media-driver 26.1, qt6 6.10/6.11.
+Missing and needing root: `qemu-system-x86-core qemu-img libvirt virt-install bootc` for the VM
+smoke test (`! sudo` fails from the Claude prompt; zerc runs it in a terminal). `bootc-image-builder`
+runs as a privileged podman container and produces the qcow2/ISO; it needs the above only to boot
+the result. Build: `scripts/build-image.sh`, logs in `~/.local/share/claude-scratch/ottoman/`.
 
 ## 7. Build order *[proposed]*
 
