@@ -112,7 +112,8 @@ Detail: memory `project_landscape_2026-11.md`.
   Moonlight `com.moonlight_stream.Moonlight`. Emby Theater has no official Flatpak; we may have to
   package it. Browser: Firefox or Chromium, labelled "rough with a remote".
 
-### 4.5 YouTube and streaming wrappers: one web-app runner (decided, delegated 2026-11-02)
+### 4.5 YouTube and streaming wrappers: one web-app runner (decided, delegated 2026-11-02; YouTube revised 2026-11-03)
+- **YouTube = VacuumTube** (`rocks.shy.VacuumTube` on Flathub, 2.0.1 as of 2026-11-03): a maintained open-source wrapper of YouTube Leanback for PCs with remote/gamepad support and an ad blocker. It replaces the YouTube half of the runner; writing our own would duplicate it. Joins the TV-ready catalogue.
 - `ottoman-webapp`: a Chromium-based (or WebKitGTK; measure Widevine availability) kiosk runner that
   opens a site fullscreen with a TV user agent and maps remote keys to the site's keys. YouTube uses
   `youtube.com/tv` (the leanback UI YouTube ships to smart TVs); Netflix/Disney+/Max open their web
