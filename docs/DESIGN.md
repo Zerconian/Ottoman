@@ -106,8 +106,8 @@ Detail: memory `project_landscape_2026-11.md`.
 - Flatpak only. Two tiers: **TV-ready** (we test D-pad/remote navigation, launch args, exit
   behaviour; shown in the store UI) and **Everything else** (Flathub search behind a toggle, with
   "untested with a remote" on each card).
-- TV-ready seed list (Flathub IDs confirmed live 2026-11-02): Jellyfin Media Player
-  `com.github.iwalton3.jellyfin-media-player` (1.12.0), Plex HTPC `tv.plex.PlexHTPC`, Kodi
+- TV-ready seed list (Flathub IDs confirmed live 2026-11-02): Jellyfin Desktop
+  `org.jellyfin.JellyfinDesktop` (2.0.0; Flathub renamed it from `com.github.iwalton3.jellyfin-media-player`, found on the first VM boot), Plex HTPC `tv.plex.PlexHTPC`, Kodi
   `tv.kodi.Kodi`, RetroArch `org.libretro.RetroArch`, Steam Link `com.valvesoftware.SteamLink`,
   Moonlight `com.moonlight_stream.Moonlight`. Emby Theater has no official Flatpak; we may have to
   package it. Browser: Firefox or Chromium, labelled "rough with a remote".

@@ -2,7 +2,7 @@
 # M1 session: ensure Flathub + Jellyfin Media Player exist (user install, first boot only), then run it.
 # Anything that fails drops to a terminal so the box is never a black screen. Errors go to the journal.
 set -u
-APP=com.github.iwalton3.jellyfin-media-player
+APP=org.jellyfin.JellyfinDesktop   # Flathub renamed it from com.github.iwalton3.jellyfin-media-player (2.0.0, 2026); the old ID 308-redirects
 log() { printf 'ottoman-session: %s\n' "$*" >&2; }
 
 for i in $(seq 1 60); do
