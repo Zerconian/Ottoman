@@ -32,7 +32,7 @@ Jellyfin::Jellyfin(QObject *parent) : QObject(parent) {
     // The shell starts before the network is up; a failed refresh retries quickly instead of waiting a minute.
     m_retry.setSingleShot(true);
     connect(&m_retry, &QTimer::timeout, this, &Jellyfin::refresh);
-    if (!m_token.isEmpty()) { setState("connected"); refresh(); m_refresh.start(); }
+    if (!m_token.isEmpty()) { qInfo().noquote() << "jellyfin: stored session for" << m_userName << "at" << m_url << ", refreshing"; setState("connected"); refresh(); m_refresh.start(); }
 }
 
 QByteArray Jellyfin::authHeader() const {
@@ -141,6 +141,7 @@ void Jellyfin::refresh() {
         request("GET", "/Shows/NextUp?UserId=" + m_userId + "&Limit=12&Fields=ParentThumbItemId", {}, [this, toItem, items](int st2, const QJsonDocument &d2) mutable {
             if (st2 == 200) for (const QJsonValue &v : d2.object().value("Items").toArray()) { MediaItem m = toItem(v.toObject()); if (!std::any_of(items.cbegin(), items.cend(), [&](const MediaItem &x){ return x.id == m.id; })) items << m; }
             m_continue.reset(items);
+            qInfo() << "jellyfin: continue watching:" << items.size() << "items";
         });
     });
     request("GET", "/Users/" + m_userId + "/Items/Latest?Limit=16&Fields=ParentThumbItemId", {}, [this, toItem](int st, const QJsonDocument &d) {
@@ -148,6 +149,7 @@ void Jellyfin::refresh() {
         QList<MediaItem> items;
         for (const QJsonValue &v : d.array()) items << toItem(v.toObject());
         m_latest.reset(items);
+        qInfo() << "jellyfin: recently added:" << items.size() << "items";
     });
 }
 
