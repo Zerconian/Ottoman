@@ -1,0 +1,24 @@
+# Ottoman OS image, milestone M1: boots to a Wayland kiosk running Jellyfin Media Player.
+# Base follows the host Fedora release (<build-host> is on 44). Bump deliberately, never "latest".
+FROM quay.io/fedora/fedora-bootc:44
+
+# Graphics + media: both Intel VA-API drivers on purpose. iHD (intel-media-driver) is Broadwell+;
+# the floor-tier Haswell box (HD 4400) needs the legacy i965 driver (libva-intel-driver).
+RUN dnf -y install \
+      cage foot \
+      mesa-dri-drivers mesa-va-drivers mesa-vulkan-drivers libva-intel-driver intel-media-driver libva-utils \
+      pipewire pipewire-alsa pipewire-pulseaudio wireplumber \
+      NetworkManager NetworkManager-wifi \
+      flatpak xdg-desktop-portal xdg-desktop-portal-gtk \
+      dejavu-sans-fonts glibc-langpack-en \
+      polkit dbus-daemon \
+    && dnf clean all \
+    && rm -rf /var/cache /var/log/dnf* /var/lib/dnf
+
+COPY rootfs/ /
+RUN chmod 0755 /usr/libexec/ottoman/session.sh \
+    && systemctl enable ottoman-session.service \
+    && systemctl set-default multi-user.target
+
+# bootc's own lint: no content in /var, no world-writable surprises.
+RUN bootc container lint
