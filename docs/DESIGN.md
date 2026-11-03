@@ -228,8 +228,14 @@ remote + local settings web UI, 18821 shell API. Bind failure is fatal, never ho
 Power-on to launcher shows no grub menu (hidden, zero timeout, Shift opens it), no kernel or systemd
 text (`quiet loglevel=3 splash rhgb systemd.show_status=0 vt.global_cursor_off=1`), a Plymouth spinner
 from the initramfs (regenerated in the image build with the plymouth module) until the session takes the
-display (`ottoman-session.service` after `plymouth-quit-wait`). Out of reach: the firmware's own logo. Open:
-the anaconda installer's Fedora-branded progress screen needs a custom product image to re-brand (M6).
+display (`ottoman-session.service` after `plymouth-quit-wait`). Out of reach: the firmware's own logo. Installer side
+(zerc 2026-11-03, proven by rehearsal 3 frames): `scripts/brand-iso.sh` post-processes bib's ISO, no installer
+rebuild: menu countdown 5 s (tree grub.cfg x2 + the EFI boot partition's copy via mtools; the appended EFI
+partition is swapped with xorriso), `rhgb` on the installer kernel lines (the systemd wall is gone; two dracut
+warning lines at 4 s remain), `images/product.img` = gzip cpio overlay that anaconda's stock
+`anaconda_auto_updates` hook unpacks: dark Ottoman sidebar + wordmark; anaconda's title already read
+"Ottoman 44 installation" from os-release. Still visible: grub's "Booting 'Install Ottoman 44'" line while the
+111 MB installer initrd loads (~38 s on QEMU's virtual CD) and anaconda's 8 s tmux text before its GUI.
 
 ### 4.11 Boot waits (zerc, 2026-11-03)
 Boot must never wait on DHCP or the internet. `NetworkManager-wait-online.service` is disabled in the
