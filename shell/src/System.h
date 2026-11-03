@@ -30,7 +30,8 @@ public:
     Q_INVOKABLE void rollback();                                    // async -> updateResult(text)
     Q_INVOKABLE void reboot() const;
     // About
-    Q_INVOKABLE QVariantMap about() const;                          // {hostname, uptime, diskFree, diskTotal, kernel}
+    Q_INVOKABLE QVariantMap about() const;
+    Q_INVOKABLE void log(const QString &line) const;                 // UI state to the journal, for driving tests                          // {hostname, uptime, diskFree, diskTotal, kernel}
 signals:
     void busyChanged();
     void joined(bool ok, const QString &text);

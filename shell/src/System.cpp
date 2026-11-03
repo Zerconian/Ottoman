@@ -124,7 +124,8 @@ QVariantMap System::updateStatus() const {
     auto desc = [](const QJsonObject &d, QString *digest) {
         const QJsonObject img = d.value("image").toObject();
         if (digest) *digest = img.value("imageDigest").toString();
-        return img.value("version").toString().isEmpty() ? img.value("imageDigest").toString().mid(7, 12) : img.value("version").toString();
+        // version label + short digest: rebuilt images share the Fedora version label, the digest tells them apart
+        return img.value("version").toString() + " (" + img.value("imageDigest").toString().mid(7, 12) + ")";
     };
     QString dg;
     if (s.value("booted").isObject()) { st["booted"] = desc(s.value("booted").toObject(), &dg); st["bootedDigest"] = dg; st["image"] = s.value("booted").toObject().value("image").toObject().value("image").toObject().value("image").toString(); }
@@ -147,3 +148,5 @@ QVariantMap System::about() const {
             {"diskFree", QString::number(st.bytesAvailable() / (1024.0 * 1024 * 1024), 'f', 1) + " GB"}, {"diskTotal", QString::number(st.bytesTotal() / (1024.0 * 1024 * 1024), 'f', 1) + " GB"},
             {"kernel", QString::fromUtf8(kv.readAll()).trimmed()}};
 }
+
+void System::log(const QString &line) const { qInfo().noquote() << "ui:" << line; }

@@ -16,7 +16,7 @@ Rectangle {
     property int c: 0
     function key() { return rows[r][Math.min(c, rows[r].length - 1)] }
     function press() {
-        const k = key()
+        const k = key(); system.log("osk press " + k)
         if (k === "Shift") shift = !shift
         else if (k === "Space") target.insert(target.cursorPosition, " ")
         else if (k === "Backspace") { if (target.cursorPosition > 0) target.remove(target.cursorPosition - 1, target.cursorPosition) }
@@ -24,6 +24,7 @@ Rectangle {
         else { target.insert(target.cursorPosition, shift ? k.toUpperCase() : k); shift = false }
     }
     focus: true
+    onVisibleChanged: if (visible) { r = 1; c = 0; system.log("osk open") }
     Keys.onLeftPressed: c = Math.max(0, Math.min(c, rows[r].length - 1) - 1)
     Keys.onRightPressed: c = Math.min(rows[r].length - 1, c + 1)
     Keys.onUpPressed: { r = Math.max(0, r - 1); c = Math.min(c, rows[r].length - 1) }

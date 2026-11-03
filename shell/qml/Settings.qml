@@ -11,7 +11,7 @@ Rectangle {
     property string message: ""
     property var pendingMode: null          // {output, mode, previous} while the 10 s revert runs
     property int revertLeft: 0
-    function open() { section = 0; sections_.currentIndex = 0; sections_.forceActiveFocus(); reload() }
+    function open() { section = 0; sections_.currentIndex = 0; sections_.forceActiveFocus(); reload(); system.log("settings open") }
     function reload() {
         message = ""
         const items = []
@@ -70,6 +70,7 @@ Rectangle {
     }
     Keys.onEscapePressed: { if (joinPanel.visible) joinPanel.visible = false; else if (pendingMode) { revertTimer.stop(); system.setMode(pendingMode.output, pendingMode.previous); pendingMode = null; reload() } else done() }
     Keys.onBackPressed: done()
+    onDone: system.log("settings close")
     Text { text: "SETTINGS"; color: "#8a8f98"; font.pixelSize: 28; font.letterSpacing: 6; anchors { left: parent.left; top: parent.top; margins: 48 } }
     ListView {
         id: sections_
@@ -77,7 +78,8 @@ Rectangle {
         model: page.sections
         delegate: Rectangle { width: 300; height: 64; radius: 8; color: ListView.isCurrentItem ? (sections_.activeFocus ? "#ffffff" : "#2a2f38") : "transparent"
             Text { anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 18 } text: modelData; font.pixelSize: 26; font.bold: true; color: parent.ListView.isCurrentItem && sections_.activeFocus ? "#111" : "#e6e7ea" } }
-        onCurrentIndexChanged: { page.section = currentIndex; options.currentIndex = 0; reload() }
+        onCurrentIndexChanged: { page.section = currentIndex; options.currentIndex = 0; reload(); system.log("settings section " + page.sections[currentIndex]) }
+        onActiveFocusChanged: if (activeFocus) system.log("settings focus sections " + page.sections[currentIndex])
         Keys.onRightPressed: options.forceActiveFocus()
         Keys.onReturnPressed: options.forceActiveFocus()
         Keys.onEnterPressed: options.forceActiveFocus()
@@ -85,7 +87,9 @@ Rectangle {
     OptionList {
         id: options
         anchors { left: sections_.right; right: parent.right; top: parent.top; bottom: parent.bottom; leftMargin: 40; rightMargin: 48; topMargin: 130; bottomMargin: 120 }
-        onActivated: function(i) { if (!keepMode()) act(i) }
+        onActivated: function(i) { system.log("settings activate " + (items[i] ? items[i].label : i)); if (!keepMode()) act(i) }
+        onCurrentIndexChanged: if (activeFocus && items[currentIndex]) system.log("settings option " + currentIndex + " " + items[currentIndex].label)
+        onActiveFocusChanged: if (activeFocus && items[currentIndex]) system.log("settings focus options " + currentIndex + " " + items[currentIndex].label)
         Keys.onLeftPressed: sections_.forceActiveFocus()
     }
     Text { text: page.message; color: "#d8dadf"; font.pixelSize: 22; anchors { left: parent.left; bottom: parent.bottom; margins: 48 } }

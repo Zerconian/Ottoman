@@ -14,7 +14,7 @@ Window {
         while (i > 0 && i < r.length && r[i].count === 0) i += dir      // skip empty rows in the direction of travel
         if (i < 0 || i >= r.length || (i > 0 && r[i].count === 0)) return
         if (r[i].currentIndex < 0) r[i].currentIndex = 0      // a model swap leaves no current item: Enter would act on nothing
-        rowIndex = i; r[i].forceActiveFocus()
+        rowIndex = i; r[i].forceActiveFocus(); system.log("home row " + i + " item " + r[i].currentIndex)
     }
     Component.onCompleted: system.applySavedModes()
     Text { text: "OTTOMAN"; color: "#8a8f98"; font.pixelSize: 28; font.letterSpacing: 6; anchors { left: parent.left; top: parent.top; margins: 48 } }
@@ -22,6 +22,7 @@ Window {
     Rectangle { id: settingsBtn; width: 170; height: 48; radius: 8; anchors { right: parent.right; top: parent.top; rightMargin: 48; topMargin: 118 }
         color: activeFocus ? "#ffffff" : "#1c2026"; border.width: 1; border.color: "#3a3f47"
         Text { anchors.centerIn: parent; text: "Settings"; font.pixelSize: 20; color: parent.activeFocus ? "#111" : "#d8dadf" }
+        onActiveFocusChanged: if (activeFocus) system.log("home settings button")
         Keys.onDownPressed: focusRow(0)
         Keys.onReturnPressed: { settings.visible = true; settings.open() }
         Keys.onEnterPressed: { settings.visible = true; settings.open() }
@@ -97,8 +98,8 @@ Window {
     // Row models swap when Jellyfin connects or signs out, which drops keyboard focus: re-focus the current row.
     Connections { target: jellyfin; function onChanged() { if (!signIn.visible) Qt.callLater(function() { focusRow(rowIndex) }) } }
     ListModel { id: signInModel; ListElement { name: "Sign in to Jellyfin"; subtitle: "Enter to connect your server"; imageUrl: ""; progress: 0 } }
-    SignIn { id: signIn; visible: false; onVisibleChanged: if (!visible) focusRow(rowIndex); onDone: visible = false }
-    Settings { id: settings; visible: false; onDone: { visible = false; focusRow(rowIndex) } }
+    SignIn { id: signIn; visible: false; z: 50; onVisibleChanged: { if (!visible) focusRow(rowIndex); system.log("signin " + (visible ? "open" : "close")) } onDone: visible = false }
+    Settings { id: settings; visible: false; z: 50; onDone: { visible = false; focusRow(rowIndex) } }
     // On-screen keyboard overlay, shared by every Field.
     Item { id: osk; anchors.fill: parent; visible: false; z: 100
         property Item target
