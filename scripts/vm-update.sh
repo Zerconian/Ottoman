@@ -3,7 +3,7 @@
 # `bootc switch <same ref>` is a no-op ("Image specification is unchanged"); `bootc upgrade` re-pulls the tag.
 set -uo pipefail
 cd "$(dirname "$0")/.."
-SSH=./scripts/vm-ssh.sh
+SSH=./scripts/vm-ssh.sh   # honours PORT_BASE
 WANT=$(curl -fsS http://127.0.0.1:18821/v2/ottoman/manifests/dev -H 'Accept: application/vnd.oci.image.manifest.v1+json' | python3 -c "import sys,json; print(json.load(sys.stdin)['config']['digest'][7:19])")
 echo "registry dev config id: $WANT"
 $SSH 'sudo bootc status --format json | python3 -c "import sys,json; d=json.load(sys.stdin)[\"status\"][\"booted\"][\"image\"]; print(\"booted now:\", d[\"image\"][\"image\"], d[\"imageDigest\"][7:19])"'

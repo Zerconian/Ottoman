@@ -2,7 +2,7 @@
 # Type a string into the headless VM through the QEMU monitor (sendkey). Usage: vm-type.sh "text" [key ...]
 # Extra args are raw QEMU key names sent after the text (ret, down, tab, esc, home...).
 set -euo pipefail
-V=${VMDIR:-$HOME/.local/share/claude-scratch/ottoman/vm}
+V=${VMDIR:-$HOME/.local/share/claude-scratch/ottoman/vm}   # PORT_BASE is not needed here: keys go through the monitor socket
 key() { printf 'sendkey %s\n' "$1" | socat - UNIX-CONNECT:"$V/mon.sock" >/dev/null; sleep 0.06; }
 s=${1:-}; shift || true
 for ((i=0; i<${#s}; i++)); do
