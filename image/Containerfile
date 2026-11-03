@@ -47,11 +47,18 @@ RUN chmod 0755 /usr/libexec/ottoman/*.sh /usr/libexec/ottoman/ottoman-shell && c
 
 # Quiet boot (zerc, 2026-11-03): grub menu hidden (Shift shows it), Plymouth spinner from the initramfs until sway's
 # first frame. The initramfs is regenerated so plymouth is inside it; grub's static config comes from bootupd at install.
+# Branding: boot entries and About read "Ottoman" (ID=fedora stays: packaging depends on it). The Plymouth
+# watermark is replaced by image/rootfs' wordmark (copied before this step).
+RUN sed -i 's/^NAME=.*/NAME="Ottoman"/; s/^PRETTY_NAME=.*/PRETTY_NAME="Ottoman"/; s/^VARIANT=.*/VARIANT="TV"/; s/^VARIANT_ID=.*/VARIANT_ID=tv/' /usr/lib/os-release \
+    && grep -q 'PRETTY_NAME="Ottoman"' /usr/lib/os-release
 RUN sed -i 's/^set timeout_style=menu$/set timeout_style=hidden/; s/^set timeout=1$/set timeout=0/' /usr/lib/bootupd/grub2-static/grub-static-pre.cfg \
     && grep -q "timeout_style=hidden" /usr/lib/bootupd/grub2-static/grub-static-pre.cfg \
     && plymouth-set-default-theme spinner \
     && KVER=$(ls /usr/lib/modules | head -1) \
-    && dracut --no-hostonly --kver "$KVER" --reproducible --zstd --add "ostree plymouth" -f "/usr/lib/modules/$KVER/initramfs.img" 2>&1 | tail -2 \
+    && dracut --no-hostonly --kver "$KVER" --reproducible --zstd --add "ostree plymouth" \
+         --omit "clevis clevis-pin-file clevis-pin-null clevis-pin-sss clevis-pin-tang clevis-pin-tpm2 network-manager network net-lib nss-softokn fips fips-crypto-policies systemd-pcrphase modsign" \
+         -f "/usr/lib/modules/$KVER/initramfs.img" 2>&1 | tail -2 \
+    && ls -la "/usr/lib/modules/$KVER/initramfs.img" \
     && lsinitrd "/usr/lib/modules/$KVER/initramfs.img" | grep -q plymouthd
 # Boot never waits on the network (zerc, 2026-11-03): NetworkManager-wait-online is off; nothing of ours is ordered
 # after network-online.target, and every wait Ottoman adds (first-boot Flatpak install 60 s, greenboot check 90 s) is bounded.
