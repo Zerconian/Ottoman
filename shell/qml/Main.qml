@@ -16,13 +16,23 @@ Window {
         if (r[i].currentIndex < 0) r[i].currentIndex = 0      // a model swap leaves no current item: Enter would act on nothing
         rowIndex = i; r[i].forceActiveFocus()
     }
+    Component.onCompleted: system.applySavedModes()
     Text { text: "OTTOMAN"; color: "#8a8f98"; font.pixelSize: 28; font.letterSpacing: 6; anchors { left: parent.left; top: parent.top; margins: 48 } }
+    // Header bar: Up from the APPS row reaches Settings.
+    Rectangle { id: settingsBtn; width: 170; height: 48; radius: 8; anchors { right: parent.right; top: parent.top; rightMargin: 48; topMargin: 118 }
+        color: activeFocus ? "#ffffff" : "#1c2026"; border.width: 1; border.color: "#3a3f47"
+        Text { anchors.centerIn: parent; text: "Settings"; font.pixelSize: 20; color: parent.activeFocus ? "#111" : "#d8dadf" }
+        Keys.onDownPressed: focusRow(0)
+        Keys.onReturnPressed: { settings.visible = true; settings.open() }
+        Keys.onEnterPressed: { settings.visible = true; settings.open() }
+        MouseArea { anchors.fill: parent; onClicked: { settings.visible = true; settings.open() } }
+    }
     Text {
         id: clock; color: "#d8dadf"; font.pixelSize: 30
         anchors { right: parent.right; top: parent.top; margins: 48 }
         Timer { interval: 1000; running: true; repeat: true; triggeredOnStart: true; onTriggered: clock.text = Qt.formatTime(new Date(), "HH:mm") }
     }
-    Text { text: jellyfin.state === "connected" ? "Jellyfin: " + jellyfin.userName : ""; color: "#6b7079"; font.pixelSize: 18; anchors { right: parent.right; top: parent.top; rightMargin: 48; topMargin: 92 } }
+    Text { text: jellyfin.state === "connected" ? "Jellyfin: " + jellyfin.userName : ""; color: "#6b7079"; font.pixelSize: 18; anchors { right: settingsBtn.left; top: parent.top; rightMargin: 24; topMargin: 130 } }
 
     Flickable {
         id: page
@@ -43,6 +53,7 @@ Window {
                     Keys.onReturnPressed: apps.launch(currentIndex)
                     Keys.onEnterPressed: apps.launch(currentIndex)
                     Keys.onDownPressed: focusRow(1)
+                    Keys.onUpPressed: settingsBtn.forceActiveFocus()
                 }
             }
             // CONTINUE WATCHING
@@ -87,6 +98,16 @@ Window {
     Connections { target: jellyfin; function onChanged() { if (!signIn.visible) Qt.callLater(function() { focusRow(rowIndex) }) } }
     ListModel { id: signInModel; ListElement { name: "Sign in to Jellyfin"; subtitle: "Enter to connect your server"; imageUrl: ""; progress: 0 } }
     SignIn { id: signIn; visible: false; onVisibleChanged: if (!visible) focusRow(rowIndex); onDone: visible = false }
+    Settings { id: settings; visible: false; onDone: { visible = false; focusRow(rowIndex) } }
+    // On-screen keyboard overlay, shared by every Field.
+    Item { id: osk; anchors.fill: parent; visible: false; z: 100
+        property Item target
+        property Item returnTo
+        function openFor(input) { target = input; returnTo = input; visible = true; kb.forceActiveFocus() }
+        Rectangle { anchors.fill: parent; color: "#99000000" }
+        Keyboard { id: kb; target: osk.target; anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 40 }
+            onDone: { osk.visible = false; if (osk.returnTo) osk.returnTo.forceActiveFocus() } }
+    }
     Text {
         text: apps.installedCount === 0 ? "Installing Jellyfin from Flathub, this takes about a minute on first boot." : "Enter opens. Home returns here, apps keep running (green dot)."
         color: "#6b7079"; font.pixelSize: 18

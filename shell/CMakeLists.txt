@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick Network)
 qt_standard_project_setup(REQUIRES 6.5)
-qt_add_executable(ottoman-shell src/main.cpp src/AppModel.cpp src/Sway.cpp src/Jellyfin.cpp src/ItemModel.h)
+qt_add_executable(ottoman-shell src/main.cpp src/AppModel.cpp src/Sway.cpp src/Jellyfin.cpp src/ItemModel.h src/System.cpp)
 # QML files live in qml/; without aliases Qt registers them under a nested path and "Main" is not found
 # (first VM run 2026-11-03: 'Module "Ottoman" contains no type named "Main"', shell restart loop).
 set_source_files_properties(qml/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qml)
@@ -13,10 +13,13 @@ set_source_files_properties(qml/Tile.qml PROPERTIES QT_RESOURCE_ALIAS Tile.qml)
 set_source_files_properties(qml/Card.qml PROPERTIES QT_RESOURCE_ALIAS Card.qml)
 set_source_files_properties(qml/SignIn.qml PROPERTIES QT_RESOURCE_ALIAS SignIn.qml)
 set_source_files_properties(qml/Field.qml PROPERTIES QT_RESOURCE_ALIAS Field.qml)
+set_source_files_properties(qml/Keyboard.qml PROPERTIES QT_RESOURCE_ALIAS Keyboard.qml)
+set_source_files_properties(qml/OptionList.qml PROPERTIES QT_RESOURCE_ALIAS OptionList.qml)
+set_source_files_properties(qml/Settings.qml PROPERTIES QT_RESOURCE_ALIAS Settings.qml)
 # Default RESOURCE_PREFIX (/qt/qml) keeps the embedded module on the engine's import path. A custom
 # prefix only worked when run from the build tree, where Qt found the loose qmldir beside the binary
 # (2026-11-03: image run failed, offscreen check from build/ passed).
 qt_add_qml_module(ottoman-shell URI Ottoman VERSION 1.0
-  QML_FILES qml/Main.qml qml/Tile.qml qml/Card.qml qml/SignIn.qml qml/Field.qml)
+  QML_FILES qml/Main.qml qml/Tile.qml qml/Card.qml qml/SignIn.qml qml/Field.qml qml/Keyboard.qml qml/OptionList.qml qml/Settings.qml)
 target_link_libraries(ottoman-shell PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Network)
 install(TARGETS ottoman-shell RUNTIME DESTINATION libexec/ottoman)

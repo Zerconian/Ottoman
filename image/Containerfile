@@ -27,7 +27,7 @@ RUN dnf -y install \
       mesa-dri-drivers mesa-vulkan-drivers libva-intel-driver intel-media-driver libva-utils \
       pipewire pipewire-alsa pipewire-pulseaudio wireplumber \
       NetworkManager NetworkManager-wifi \
-      flatpak xdg-desktop-portal xdg-desktop-portal-gtk \
+      flatpak xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-wlr sudo \
       dejavu-sans-fonts glibc-langpack-en \
       polkit dbus-daemon \
     && dnf clean all \
@@ -36,7 +36,7 @@ RUN dnf -y install \
 
 COPY image/rootfs/ /
 COPY --from=shell-build /out/ottoman-shell /usr/libexec/ottoman/ottoman-shell
-RUN chmod 0755 /usr/libexec/ottoman/*.sh /usr/libexec/ottoman/ottoman-shell \
+RUN chmod 0755 /usr/libexec/ottoman/*.sh /usr/libexec/ottoman/ottoman-shell && chmod 0440 /etc/sudoers.d/ottoman && visudo -cf /etc/sudoers.d/ottoman \
     && systemctl enable ottoman-session.service \
     && systemctl set-default multi-user.target
 

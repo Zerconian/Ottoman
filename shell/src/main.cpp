@@ -5,6 +5,7 @@
 #include "Sway.h"
 #include "Jellyfin.h"
 #include "ItemModel.h"
+#include "System.h"
 int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
     app.setApplicationName(QStringLiteral("ottoman-shell"));      // becomes the Wayland app_id sway matches on
@@ -12,6 +13,7 @@ int main(int argc, char *argv[]) {
     Sway sway;
     AppModel apps(&sway);
     Jellyfin jellyfin;
+    System system;
     qmlRegisterUncreatableType<ItemModel>("Ottoman", 1, 0, "ItemModel", "provided by Jellyfin");
     QObject::connect(&jellyfin, &Jellyfin::needApp, &apps, [&] { apps.launchFlatpak(QStringLiteral("org.jellyfin.JellyfinDesktop")); });
     QObject::connect(&jellyfin, &Jellyfin::played, &sway, [&](const QString &, bool ok) { if (ok) sway.showApp(QStringLiteral("org.jellyfin.JellyfinDesktop")); });
@@ -19,6 +21,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty(QStringLiteral("sway"), &sway);
     engine.rootContext()->setContextProperty(QStringLiteral("apps"), &apps);
     engine.rootContext()->setContextProperty(QStringLiteral("jellyfin"), &jellyfin);
+    engine.rootContext()->setContextProperty(QStringLiteral("system"), &system);
     engine.loadFromModule("Ottoman", "Main");
     if (engine.rootObjects().isEmpty()) return 1;
     return app.exec();
