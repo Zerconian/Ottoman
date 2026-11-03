@@ -246,6 +246,15 @@ exact wording is not in the serial log (installer text goes to the VGA console).
 installer boot to identify it; it belongs to the anaconda ISO, not the installed system.
 
 ### 4.12 UI polish log
+- 2026-11-03 23:3x UTC, live proofs on the ISO-installed VM (all green): Home Assistant `/power?state=off|on`
+  turned the output off and on (sway `get_outputs` power false/true); pointer mode routed Right x3 + OK to the
+  virtual mouse with zero launcher key events; Settings > Updates > Check found the pushed image, Download staged
+  it (bootc "Queued for next boot"), the page then listed "Ready on next restart", Restart now booted it (About
+  shows `commit=cc7d8b3`), old image in the rollback slot, greenboot healthy; Add app > Tubi > Enter put the tile
+  on the row (apps.conf `shown=web:tubi`), its tile opened Firefox kiosk on tubitv.com (screendump).
+- Defect found and fixed the same hour: order/hidden were keyed by Flatpak ID, so installing Firefox put all 13
+  streaming sites on the row and Add app could neither add nor hide one. Now keyed per entry (`web:<slug>`),
+  opt-in sites start off the row (`shown` list), Netflix stays by default.
 - 2026-11-03 20:5x UTC (zerc, live): Jellyfin Desktop opened in the web client's Desktop layout (arrows scroll, nothing takes focus). Cause: its `--tv` flag only sets `main.layout` in the profile config; the web client obeys `main.webMode`, which defaults to `desktop`, and a partial config file gets rewritten with `desktop` on launch while a complete one is kept. Fix: `jellyfin.sh` creates the default profile from a complete TV-mode template (`/usr/share/ottoman/jellyfin-desktop.conf.template`) before the first launch and patches an existing profile that drifted. The other default apps are 10-foot by design; the streaming sites rely on pointer mode. Rule (zerc): every app must open remote-ready on the first try.
 - 2026-11-03 20:39 UTC (zerc, live over krdc): tiles got gradient + sheen + glow backgrounds, icons from the largest shipped size with mipmaps, the quality note centered under the name; the rows no longer clip (the earlier `topMargin` padding only affects vertical lists, so the focused tile kept bleeding at the top). Screendump tile-1: outline complete on all sides. Prefetch proven the same minute: "firstrun prefetch start" then "setup done, failed 0" because everything was already installed.
 - 2026-11-03 20:36 UTC, proven on a fresh install driven by zerc over krdc: the new first run (network, then the setup screen) installed Jellyfin, Plex, YouTube, Firefox, RetroArch and Steam Link in that order, all exit 0, and landed on the launcher with the apps' own icons, the outline only on the focused tile and no clipping (screendump ux-home). Fixed from that shot: the streaming tiles' quality note collided with the name.
