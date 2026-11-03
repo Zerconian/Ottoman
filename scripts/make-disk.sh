@@ -22,4 +22,6 @@ podman run --rm --privileged --pull=newer \
   -v /var/lib/containers/storage:/var/lib/containers/storage \
   quay.io/centos-bootc/bootc-image-builder:latest \
   --type "$TYPE" --rootfs "$ROOTFS" --local "$IMG"
+# bib writes as root; hand the result back to the invoking user so vm-run.sh can make overlays beside it.
+chown -R "$SRC_USER:" "$(pwd)/build"
 ls -la "$OUT"/*/ 2>/dev/null || ls -la "$OUT"
