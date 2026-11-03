@@ -170,6 +170,34 @@ Good-tier box.
 - *[proposed]* Steam Link and Moonlight clients in the TV-ready tier: they stream from a gaming PC,
   cost nothing to support, and are the literal form of "defer to Steam".
 
+### 4.10 Launcher (M2) — decided by zerc in Q&A, 2026-11-03
+
+| # | Question | Decision |
+|---|---|---|
+| 1 | Home screen shape | **Shield-style rows:** header (clock, settings, power), APPS row, then content rows (Continue watching, Recently added) |
+| 2 | Home / Back | **Home suspends the app** (keeps running behind the launcher, tile shows a running dot, resume is instant); **Back always goes to the app.** Launcher caps background apps at one or two and closes the oldest |
+| 3 | Settings v1 | **Network (Wi-Fi join, on-screen keyboard), display (resolution + refresh), audio (output device, passthrough), updates (check / apply / rollback), About (version, IP, storage).** Remote pairing waits for M3 |
+| 4 | Phone web remote | **M3**, with CEC/IR/Bluetooth, one input daemon. M2 is driven by keyboard and gamepad |
+| 5 | Content rows | **Jellyfin first:** sign in once from the launcher (password or Quick Connect), token stored, rows filled from the API, selecting an item deep-links into Jellyfin Desktop. Plex/Emby adapters later; their rows show an empty state |
+| 6 | App row | **User-managed from the TV-ready list:** installed TV-ready apps, long-press to move / hide / uninstall, an "Add app" tile at the end installs from the TV-ready list. Flathub-wide search waits for the store screen |
+| 7 | Idle | **Screensaver (dim clock/artwork) at 5 min, display off at 30 min, the box never suspends.** A playing app blocks both |
+| 8 | First run | **Network only** (zerc chose the smaller option): one Wi-Fi/wired screen, then home with Jellyfin installing in the background. Display, Jellyfin sign-in and extra apps live in Settings |
+
+**Compositor consequence *[proposed]*:** decision 2 needs the shell to raise and lower app windows
+on Home, which `cage` cannot do (it only shows the newest toplevel). Options: (a) **sway in kiosk
+configuration** (no bar, every window fullscreen, borders off) with the launcher driving it over
+sway IPC (`focus`, `kill`, `move scratchpad`); same wlroots stack as cage, so the hardware story is
+unchanged. (b) Write the compositor into the launcher with Qt Wayland Compositor on eglfs/KMS:
+total control, but eglfs on random mini PCs is less proven than wlroots. (c) labwc, same IPC idea
+with a smaller surface but a younger IPC. Pick: **(a) sway**, decided by measurement in M2.0 (the
+launcher must come forward over a running Jellyfin Desktop on Home, and Back must reach the app).
+
+**M2 build order *[proposed]*:** M2.0 session = sway kiosk + launcher process + IPC raise/lower proven
+on the VM. M2.1 home screen: header, APPS row from installed Flatpaks, launch/suspend/resume, running
+dot. M2.2 Jellyfin sign-in + content rows + deep links. M2.3 Settings (network, display, audio,
+updates, about). M2.4 first-run (network) + screensaver/display-off. M2.5 app-row management + Add
+app. Each step ships to the VM via the registry and is driven by keyboard/gamepad in QEMU.
+
 ## 5. Open questions
 
 ### Batch 1 (2026-11-02): answered
@@ -178,10 +206,9 @@ Good-tier box.
 5. Gaming: defer to Steam, RetroArch only (§4.9). 6. Name: decide first, then zerc recreates the repo
 under the new name and the working directory moves.
 
-### Batch 2 (2026-11-02): open
-- Name (shortlist in chat; collisions checked 2026-11-02: no OS/distro named Ottoman, Tenfoot,
-  Mantel or Divan; "Plinth" was FreedomBox's old UI name; "Anybox" is a Mac bookmark manager).
-- Confirm the Tiny's CPU model.
+### Batch 2 (2026-11-02): name = Ottoman (zerc). Tiny CPU model still open (the mini PCs are in storage until after 2026-11-08).
+
+### Batch 3 (2026-11-03): M2 launcher, eight questions one by one, answers in §4.10.
 
 ## 5a. Batch 1 original list (2026-11-02)
 
