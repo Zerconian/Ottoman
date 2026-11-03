@@ -52,9 +52,9 @@ Window {
             Column { spacing: 14
                 Text { text: "APPS"; color: "#8a8f98"; font.pixelSize: 22; font.letterSpacing: 3 }
                 ListView {
-                    id: appsRow; width: win.width - 48; height: 190; orientation: ListView.Horizontal; spacing: 24; clip: true
+                    id: appsRow; width: win.width - 48; height: 214; orientation: ListView.Horizontal; spacing: 24; clip: true; leftMargin: 12; rightMargin: 12; topMargin: 12
                     model: apps; focus: true; highlightMoveDuration: 0; preferredHighlightBegin: 0; preferredHighlightEnd: width - 60; highlightRangeMode: ListView.ApplyRange
-                    delegate: Tile { label: model.name; tint: model.color; installed: model.installed; running: model.running; isAdd: model.isAdd; note: model.note; current: ListView.isCurrentItem
+                    delegate: Tile { label: model.name; tint: model.color; installed: model.installed; running: model.running; isAdd: model.isAdd; note: model.note; current: ListView.isCurrentItem && appsRow.activeFocus
                         MouseArea { anchors.fill: parent; onClicked: { appsRow.currentIndex = index; appsRow.activate() } } }
                     function activate() { if (apps.isAddRow(currentIndex)) addApp.open(); else apps.launch(currentIndex) }
                     function openMenu(held) { if (!apps.isAddRow(currentIndex)) tileMenu.open(currentIndex, apps.data(apps.index(currentIndex, 0), 257), held) }
@@ -80,10 +80,10 @@ Window {
                     Text { text: jellyfin.state === "connected" ? "" : "Jellyfin not signed in"; color: "#555a63"; font.pixelSize: 18; anchors.verticalCenter: parent.verticalCenter }
                 }
                 ListView {
-                    id: contRow; width: win.width - 48; height: 225; orientation: ListView.Horizontal; spacing: 24; clip: true
+                    id: contRow; width: win.width - 48; height: 249; orientation: ListView.Horizontal; spacing: 24; clip: true; leftMargin: 12; rightMargin: 12; topMargin: 12
                     model: jellyfin.state === "connected" ? jellyfin.continueModel : signInModel
                     highlightMoveDuration: 0; preferredHighlightBegin: 0; preferredHighlightEnd: width - 60; highlightRangeMode: ListView.ApplyRange
-                    delegate: Card { title: model.name; subtitle: model.subtitle; imageUrl: model.imageUrl; progress: model.progress; current: ListView.isCurrentItem
+                    delegate: Card { title: model.name; subtitle: model.subtitle; imageUrl: model.imageUrl; progress: model.progress; current: ListView.isCurrentItem && contRow.activeFocus
                         MouseArea { anchors.fill: parent; onClicked: { contRow.currentIndex = index; contRow.activate() } } }
                     function activate() { if (currentIndex < 0) currentIndex = 0; if (jellyfin.state === "connected") jellyfin.play(jellyfin.continueModel.idAt(currentIndex)); else signIn.visible = true }
                     Keys.onReturnPressed: activate()
@@ -96,10 +96,10 @@ Window {
             Column { spacing: 14; visible: jellyfin.state === "connected"
                 Text { text: "RECENTLY ADDED"; color: "#8a8f98"; font.pixelSize: 22; font.letterSpacing: 3 }
                 ListView {
-                    id: latestRow; width: win.width - 48; height: 225; orientation: ListView.Horizontal; spacing: 24; clip: true
+                    id: latestRow; width: win.width - 48; height: 249; orientation: ListView.Horizontal; spacing: 24; clip: true; leftMargin: 12; rightMargin: 12; topMargin: 12
                     model: jellyfin.latestModel
                     highlightMoveDuration: 0; preferredHighlightBegin: 0; preferredHighlightEnd: width - 60; highlightRangeMode: ListView.ApplyRange
-                    delegate: Card { title: model.name; subtitle: model.subtitle; imageUrl: model.imageUrl; progress: model.progress; current: ListView.isCurrentItem
+                    delegate: Card { title: model.name; subtitle: model.subtitle; imageUrl: model.imageUrl; progress: model.progress; current: ListView.isCurrentItem && latestRow.activeFocus
                         MouseArea { anchors.fill: parent; onClicked: { latestRow.currentIndex = index; jellyfin.play(jellyfin.latestModel.idAt(index)) } } }
                     Keys.onReturnPressed: jellyfin.play(jellyfin.latestModel.idAt(currentIndex))
                     Keys.onEnterPressed: jellyfin.play(jellyfin.latestModel.idAt(currentIndex))
@@ -110,7 +110,7 @@ Window {
         // keep the focused row in view
         onHeightChanged: contentY = 0
     }
-    onRowIndexChanged: page.contentY = rowIndex === 0 ? 0 : rowIndex === 1 ? 240 : 520
+    onRowIndexChanged: page.contentY = rowIndex === 0 ? 0 : rowIndex === 1 ? 264 : 568
     // Row models swap when Jellyfin connects or signs out, which drops keyboard focus: re-focus the current row.
     // Re-focus the home rows after a Jellyfin state change, but never steal focus from an open overlay
     // (signing out from Settings > About used to drop focus behind the Settings page).

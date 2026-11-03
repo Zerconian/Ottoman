@@ -3,21 +3,9 @@
 # (user install, first boot only), then run it. The M2 launcher replaces this script as the persistent client.
 # Anything that fails drops to a terminal so the box is never a black screen. Errors go to the journal.
 set -u
-APP=org.jellyfin.JellyfinDesktop   # Flathub renamed it from com.github.iwalton3.jellyfin-media-player (2.0.0, 2026); the old ID 308-redirects
 log() { printf 'ottoman-session: %s\n' "$*" >&2; }
-
-for i in $(seq 1 60); do
-  nm-online -q -t 1 2>/dev/null && break
-  sleep 1
-done
-
-if ! flatpak --user info "$APP" >/dev/null 2>&1; then
-  log "installing $APP from Flathub (first boot)"
-  flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo \
-    || log "flathub remote-add failed"
-  flatpak --user install -y --noninteractive flathub "$APP" \
-    || log "install of $APP failed"
-fi
-
-# The launcher (shell.sh) runs apps from here on; this script only provisions.
+# Only the Flathub remote is provisioned here; the launcher's first-run screen installs the default apps one by
+# one with visible status (zerc, 2026-11-03: land in a usable UI, no apps appearing out of nowhere).
+for i in $(seq 1 60); do nm-online -q -t 1 2>/dev/null && break; sleep 1; done
+flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo || log "flathub remote-add failed"
 log "provisioning done"

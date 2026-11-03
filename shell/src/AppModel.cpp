@@ -10,16 +10,16 @@ static QString appsConf() { const QString d = QStandardPaths::writableLocation(Q
 AppModel::AppModel(Sway *sway, QObject *parent) : QAbstractListModel(parent), m_sway(sway) {
     // TV-ready catalogue (docs/DESIGN.md 4.4). app_id is what the window reports to sway; for Flatpaks it is the app ID.
     m_apps = {
-        {"Jellyfin",  "org.jellyfin.JellyfinDesktop",  "org.jellyfin.JellyfinDesktop",  "#00a4dc", {"--tv", "--fullscreen"}},
+        {"Jellyfin",  "org.jellyfin.JellyfinDesktop",  "org.jellyfin.JellyfinDesktop",  "#00a4dc", {"--tv", "--fullscreen"}, {}, "", "", true},
         // VacuumTube ships with --socket=x11 and the session has no XWayland: force Wayland (crashed in zypak otherwise, 2026-11-03).
-        {"YouTube",   "rocks.shy.VacuumTube",          "rocks.shy.VacuumTube",          "#c4302b", {}, {"--nosocket=x11", "--socket=wayland"}},
+        {"YouTube",   "rocks.shy.VacuumTube",          "rocks.shy.VacuumTube",          "#c4302b", {}, {"--nosocket=x11", "--socket=wayland"}, "", "", true},
         {"Plex",      "tv.plex.PlexHTPC",              "tv.plex.PlexHTPC",              "#e5a00d"},
         {"Kodi",      "tv.kodi.Kodi",                  "tv.kodi.Kodi",                  "#17b2e7"},
         {"RetroArch", "org.libretro.RetroArch",        "org.libretro.RetroArch",        "#6f42c1"},
         {"Steam Link","com.valvesoftware.SteamLink",   "com.valvesoftware.SteamLink",   "#1b2838"},
         {"Moonlight", "com.moonlight_stream.Moonlight","com.moonlight_stream.Moonlight","#2d7a3e"},
         // Streaming sites run through webapp.sh in Firefox kiosk (DESIGN.md 4.5). Same Flatpak, own profile each.
-        {"Netflix",   "org.mozilla.firefox", "org.mozilla.firefox", "#b1060f", {}, {}, "https://www.netflix.com/browse", "up to 1080p (Widevine L3)"},
+        {"Netflix",   "org.mozilla.firefox", "org.mozilla.firefox", "#b1060f", {}, {}, "https://www.netflix.com/browse", "up to 1080p (Widevine L3)", true},
         {"Disney+",   "org.mozilla.firefox", "org.mozilla.firefox", "#0a3d91", {}, {}, "https://www.disneyplus.com/home", "up to 1080p (Widevine L3)"},
         {"Max",       "org.mozilla.firefox", "org.mozilla.firefox", "#5b2ccd", {}, {}, "https://play.max.com", "up to 1080p (Widevine L3)"},
     };
@@ -144,4 +144,33 @@ void AppModel::uninstall(int row) {
     if (row < 0 || row >= m_rows.size()) return;
     const QString id = m_apps[m_rows[row]].flatpakId;
     runFlatpak("Removing", {"--user", "uninstall", "-y", "--noninteractive", id}, id);
+}
+
+// ---- first-run setup ----------------------------------------------------------------------------
+QVariantList AppModel::defaults() const {
+    QVariantList l; QSet<QString> seen;
+    for (const AppEntry &a : m_apps) if (a.byDefault && !seen.contains(a.flatpakId)) { seen.insert(a.flatpakId); l << QVariantMap{{"name", a.flatpakId == "org.mozilla.firefox" ? QStringLiteral("Firefox (Netflix, Disney+, Max)") : a.name}, {"flatpakId", a.flatpakId}, {"installed", a.installed}}; }
+    return l;
+}
+void AppModel::installDefaults() {
+    refreshInstalled();
+    m_queue.clear(); m_queueFailed = 0;
+    for (const QVariant &v : defaults()) { const QVariantMap m = v.toMap(); if (m["installed"].toBool()) emit setupProgress(m["name"].toString(), "skipped"); else m_queue << m["flatpakId"].toString(); }
+    nextInQueue();
+}
+void AppModel::nextInQueue() {
+    if (m_queue.isEmpty()) { refresh(); emit setupDone(m_queueFailed); return; }
+    const QString id = m_queue.takeFirst();
+    QString name = id; for (const AppEntry &a : m_apps) if (a.flatpakId == id) { name = a.flatpakId == "org.mozilla.firefox" ? QStringLiteral("Firefox (Netflix, Disney+, Max)") : a.name; break; }
+    emit setupProgress(name, "installing");
+    for (const AppEntry &a : m_apps) if (a.flatpakId == id && !a.overrides.isEmpty()) QProcess::execute(QStringLiteral("flatpak"), QStringList{QStringLiteral("override"), QStringLiteral("--user")} + a.overrides + QStringList{id});
+    auto *p = new QProcess(this);
+    connect(p, &QProcess::finished, this, [this, p, id, name](int code, QProcess::ExitStatus) {
+        const QString out = QString::fromUtf8(p->readAllStandardError() + p->readAllStandardOutput()).simplified().left(200);
+        qInfo().noquote() << "setup:" << id << "->" << code << out;
+        if (code != 0) m_queueFailed++;
+        emit setupProgress(name, code == 0 ? "done" : "failed");
+        p->deleteLater(); nextInQueue();
+    });
+    p->start(QStringLiteral("flatpak"), {"--user", "install", "-y", "--noninteractive", "flathub", id});
 }

@@ -182,7 +182,7 @@ Good-tier box.
 | 5 | Content rows | **Jellyfin first:** sign in once from the launcher (password or Quick Connect), token stored, rows filled from the API, selecting an item deep-links into Jellyfin Desktop. Plex/Emby adapters later; their rows show an empty state. **Deep-link mechanism *[proposed]*:** Jellyfin Desktop 2.0 has no item/URL argument (checked `--help` 2026-11-03: only `--tv`, `--fullscreen`, profiles, config-dir, log-level). The shell is itself a Jellyfin client, so it deep-links the Jellyfin way: `POST /Sessions/{jellyfinDesktopSessionId}/Playing?itemIds=X&playCommand=PlayNow`, the same remote-control call the official apps use for cast-to. Launch args: `--tv --fullscreen` |
 | 6 | App row | **User-managed from the TV-ready list:** installed TV-ready apps, long-press to move / hide / uninstall, an "Add app" tile at the end installs from the TV-ready list. Flathub-wide search waits for the store screen |
 | 7 | Idle | **Screensaver (dim clock/artwork) at 5 min, display off at 30 min, the box never suspends.** A playing app blocks both |
-| 8 | First run | **Network only** (zerc chose the smaller option): one Wi-Fi/wired screen, then home with Jellyfin installing in the background. Display, Jellyfin sign-in and extra apps live in Settings |
+| 8 | First run | **Network, then a setup screen** (revised by zerc 2026-11-03: "land in a UI that's usable vs having to add apps or wait for Jellyfin to magically appear"): one Wi-Fi/wired screen, then "Setting up Ottoman" installs the default apps one by one with visible status (Jellyfin, YouTube via VacuumTube, Firefox for the streaming tiles), with Retry / Continue anyway on failure, then the launcher. Display, Jellyfin sign-in and extra apps live in Settings |
 
 **Compositor consequence *[proposed]*:** decision 2 needs the shell to raise and lower app windows
 on Home, which `cage` cannot do (it only shows the newest toplevel). Options: (a) **sway in kiosk
@@ -231,6 +231,9 @@ image (nothing in the session is ordered after `network-online.target`); Ottoman
 check: 90 s). Open: zerc saw a dracut line with "no time limit" while the installer ISO booted; the
 exact wording is not in the serial log (installer text goes to the VGA console). Screendump the next
 installer boot to identify it; it belongs to the anaconda ISO, not the installed system.
+
+### 4.12 UI polish log
+- 2026-11-03 (zerc, from a screenshot): the focus outline was clipped top/left (tiles scale 6% inside a clipped row starting at its edge: rows now have 12 px inner margins) and a second row showed a highlight without focus (`ListView.isCurrentItem` alone: now `&& row.activeFocus`, so only the item being interacted with is highlighted).
 
 ## 6a. Build and test tooling (<build-host>, 2026-11-02)
 

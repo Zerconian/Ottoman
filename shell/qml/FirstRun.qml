@@ -21,7 +21,7 @@ Rectangle {
     }
     function act(i) {
         const it = list.items[i]; if (!it || !it.action) return
-        if (it.action === "done") { system.markFirstRunDone(); done() }
+        if (it.action === "done") { startSetup() }
         else if (it.action === "refresh") refresh()
         else if (it.action === "scan") { message = "Scanning..."; wifi = system.wifiList(); build(); message = wifi.length + " networks" }
         else if (it.action === "join") { if (it.security) { joinSsid = it.ssid; joinPass.text = ""; joinPanel.visible = true; joinPass.inputItem.forceActiveFocus() } else system.wifiJoin(it.ssid, "") }
@@ -32,9 +32,11 @@ Rectangle {
     }
     Component.onCompleted: { refresh(); if (visible) list.forceActiveFocus() }     // initial visible=true never fires onVisibleChanged
     onVisibleChanged: if (visible) { refresh(); list.forceActiveFocus() }
-    Text { text: "Welcome to Ottoman"; color: "#f2f2f2"; font.pixelSize: 44; font.bold: true; anchors { left: parent.left; top: parent.top; margins: 48 } }
-    Text { text: "Connect this box to your network. Everything else lives in Settings."; color: "#8a8f98"; font.pixelSize: 22; anchors { left: parent.left; top: parent.top; leftMargin: 48; topMargin: 118 } }
-    OptionList { id: list; anchors { left: parent.left; right: parent.right; top: parent.top; bottom: parent.bottom; margins: 48; topMargin: 180; bottomMargin: 110 }
+    Text { text: page.setup ? "Setting up Ottoman" : "Welcome to Ottoman"; color: "#f2f2f2"; font.pixelSize: 44; font.bold: true; anchors { left: parent.left; top: parent.top; margins: 48 } }
+    Text { text: page.setup ? "Installing the default apps from Flathub. This happens once." : "Connect this box to your network. Everything else lives in Settings."; color: "#8a8f98"; font.pixelSize: 22; anchors { left: parent.left; top: parent.top; leftMargin: 48; topMargin: 118 } }
+    OptionList { id: setupList; visible: page.setup; anchors { left: parent.left; right: parent.right; top: parent.top; bottom: parent.bottom; margins: 48; topMargin: 180; bottomMargin: 110 }
+        onActivated: function(i) { const it = items[i]; if (!it || !it.action) return; if (it.action === "retry") { page.setupRows = page.setupRows.map(function(x) { return {label: x.label, value: x.value === "failed" ? "waiting" : x.value} }); items = page.setupRows; apps.installDefaults() } else if (it.action === "finish") { system.markFirstRunDone(); page.done() } } }
+    OptionList { id: list; visible: !page.setup; anchors { left: parent.left; right: parent.right; top: parent.top; bottom: parent.bottom; margins: 48; topMargin: 180; bottomMargin: 110 }
         onActivated: function(i) { act(i) }
         onActiveFocusChanged: if (activeFocus && items[currentIndex]) system.log("firstrun focus " + currentIndex + " " + items[currentIndex].label)
         onCurrentIndexChanged: if (activeFocus && items[currentIndex]) system.log("firstrun option " + currentIndex + " " + items[currentIndex].label) }

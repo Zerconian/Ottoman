@@ -5,7 +5,7 @@
 #include "Sway.h"
 // The APPS row (DESIGN.md 4.10 #6): the TV-ready catalogue filtered to installed-and-not-hidden apps in the
 // user's saved order, plus an "Add app" tile at the end. Order and hidden set live in ~/.config/ottoman/apps.conf.
-struct AppEntry { QString name, flatpakId, appId, color; QStringList args; QStringList overrides; QString webUrl; QString note; bool installed = false; bool running = false; bool hidden = false; };
+struct AppEntry { QString name, flatpakId, appId, color; QStringList args; QStringList overrides; QString webUrl; QString note; bool byDefault = false; bool installed = false; bool running = false; bool hidden = false; };
 class AppModel : public QAbstractListModel {
     Q_OBJECT
     Q_PROPERTY(int installedCount READ installedCount NOTIFY changed)
@@ -29,9 +29,14 @@ public:
     Q_INVOKABLE QVariantList catalogue() const;        // every catalogue app: {name, flatpakId, installed, hidden}
     Q_INVOKABLE void install(const QString &flatpakId);
     Q_INVOKABLE void unhide(const QString &flatpakId);
+    // first-run setup: install the default set one by one, reporting each step (DESIGN.md 4.10 #8 revised 2026-11-03)
+    Q_INVOKABLE QVariantList defaults() const;          // [{name, flatpakId, installed}] unique by flatpakId
+    Q_INVOKABLE void installDefaults();                 // emits setupProgress(name, state) per app, setupDone(failedCount)
 signals:
     void changed();
     void opDone(bool ok, const QString &text);
+    void setupProgress(const QString &name, const QString &state);   // state: installing | done | failed | skipped
+    void setupDone(int failed);
 private:
     void refreshInstalled();
     void refreshRunning();
@@ -43,5 +48,7 @@ private:
     QList<int> m_rows;           // indices into m_apps shown in the row, in order
     QStringList m_order, m_hidden;
     QString m_busy;
+    QStringList m_queue; int m_queueFailed = 0;
+    void nextInQueue();
     QTimer m_poll;
 };
