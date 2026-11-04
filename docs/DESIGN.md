@@ -288,7 +288,10 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   `:edge` on ghcr is Actions-built (3d1ebba2c40a, source label set). Three earlier runs built fine and failed only at the
   push: the package had been created by a manual push, so the workflow token needed Write under the package's
   Manage Actions access (zerc), and the mirror token needed the Workflows permission; (4) DONE: the test VM is that
-  public install and follows `:stable`.
+  public install and follows `:stable`. (5) DONE 20:1x UTC: a `release-20261104-cd0f5bb` tag pushed to Gitea reached
+  GitHub through the mirror (after a second sync: two syncs seconds apart race and the loser drops its tag), the workflow
+  pushed `:stable` + `:20261104-cd0f5bb` and published GitHub Release 20261104-cd0f5bb with the 1.22 GB netinstall ISO
+  and its sha256; from here releases are tag pushes, `scripts/release.sh` is the hand fallback.
 
 ### 4.14 Public-repo hygiene (zerc, 2026-11-04 19:1x UTC: "make sure there's nothing PII related in the repo")
 - Sweep over all 130 public commits and the tree: authors, e-mail addresses, IPv4, hostnames, keys and tokens, MAC
