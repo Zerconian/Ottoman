@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QRegularExpression>
 #include <QFile>
+#include <QFileInfo>
 
 static QString appsConf() { const QString d = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/ottoman"; QDir().mkpath(d); return d + "/apps.conf"; }
 
@@ -35,6 +36,8 @@ AppModel::AppModel(Sway *sway, QObject *parent) : QAbstractListModel(parent), m_
         {"Steam Link","com.valvesoftware.SteamLink",   "com.valvesoftware.SteamLink",   "#1b2838", {}, {}, "", "", true},
         {"Kodi",      "tv.kodi.Kodi",                  "tv.kodi.Kodi",                  "#17b2e7"},
         {"Moonlight", "com.moonlight_stream.Moonlight","com.moonlight_stream.Moonlight","#2d7a3e"},
+        // Native apps layered into the image (not on Flathub), opt-in via Add app. Plezy: Plex + Jellyfin + Emby client, libmpv (zerc 2026-11-04).
+        {"Plezy",     "", "com.edde746.plezy", "#14b8a6", {}, {}, "", "Plex, Jellyfin and Emby", false, "/usr/libexec/ottoman/plezy.sh", "/usr/bin/plezy"},   // wrapper forces the TV layout   // app_id measured on the VM 2026-11-04
     };
     load();
     refresh();
@@ -44,8 +47,8 @@ AppModel::AppModel(Sway *sway, QObject *parent) : QAbstractListModel(parent), m_
 
 // Streaming sites all live in the one Firefox Flatpak, so order/hidden/shown are keyed per entry, not per package
 // (found 2026-11-03: keyed by flatpakId, installing Firefox put all 13 sites on the row and Add app could not add one).
-QString AppModel::keyOf(const AppEntry &a) { return a.webUrl.isEmpty() ? a.flatpakId : "web:" + a.name.toLower().remove(QRegularExpression("[^a-z0-9]")); }
-bool AppModel::onRow(const AppEntry &a) const { return a.installed && !a.hidden && (a.webUrl.isEmpty() || a.byDefault || m_shown.contains(keyOf(a))); }
+QString AppModel::keyOf(const AppEntry &a) { const QString slug = a.name.toLower().remove(QRegularExpression("[^a-z0-9]")); return !a.exec.isEmpty() ? "native:" + slug : a.webUrl.isEmpty() ? a.flatpakId : "web:" + slug; }
+bool AppModel::onRow(const AppEntry &a) const { return a.installed && !a.hidden && ((a.webUrl.isEmpty() && a.exec.isEmpty()) || a.byDefault || m_shown.contains(keyOf(a))); }   // web sites and native apps are opt-in
 void AppModel::load() {
     QSettings s(appsConf(), QSettings::IniFormat);
     m_order = s.value("order").toStringList(); m_hidden = s.value("hidden").toStringList(); m_shown = s.value("shown").toStringList();
@@ -81,6 +84,12 @@ QVariant AppModel::data(const QModelIndex &idx, int role) const {
     return {};
 }
 QString AppModel::iconFor(const AppEntry &a) const {
+    if (!a.exec.isEmpty()) {   // native apps install their icon into the system hicolor theme under the binary name (Plezy: plezy.png, app_id com.edde746.plezy)
+        const QString icon = QFileInfo(a.exec).fileName();
+        for (const char *dir : {"512x512/apps/", "256x256/apps/", "128x128/apps/", "scalable/apps/"})
+            for (const char *ext : {".png", ".svg"}) { const QString f = "/usr/share/icons/hicolor/" + QString(dir) + icon + ext; if (QFile::exists(f)) return "file://" + f; }
+        return {};
+    }
     // Installed Flatpaks export their own icon here; showing an installed app's icon in its launcher is what the icon ships for.
     const QString base = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/flatpak/exports/share/icons/hicolor/";
     for (const char *dir : {"scalable/apps/", "512x512/apps/", "256x256/apps/", "128x128/apps/", "64x64/apps/"})
@@ -98,7 +107,8 @@ void AppModel::launch(int row) {
     if (a.running) { qInfo() << "resume" << a.appId; m_sway->showApp(a.appId); return; }
     qInfo() << "launch" << a.name << a.flatpakId;
     if (!a.webUrl.isEmpty()) { QProcess::startDetached(QStringLiteral("/usr/libexec/ottoman/webapp.sh"), {a.name.toLower().remove(QRegularExpression("[^a-z0-9]")), a.webUrl}); return; }
-    if (!a.wrapper.isEmpty()) { QProcess::startDetached(a.wrapper, {}); return; }
+    if (!a.wrapper.isEmpty()) { QProcess::startDetached(a.wrapper, {}); return; }   // wrappers win: they set up the app (TV layout) then exec it
+    if (!a.exec.isEmpty()) { QProcess::startDetached(a.exec, a.args); return; }
     QProcess::startDetached(QStringLiteral("flatpak"), QStringList{QStringLiteral("--user"), QStringLiteral("run"), a.flatpakId} + a.args);
 }
 void AppModel::launchFlatpak(const QString &flatpakId) {
@@ -113,7 +123,7 @@ void AppModel::refreshInstalled() {
     p.start(QStringLiteral("flatpak"), {QStringLiteral("--user"), QStringLiteral("list"), QStringLiteral("--app"), QStringLiteral("--columns=application")});
     if (!p.waitForFinished(5000)) { qWarning() << "flatpak list timed out"; return; }
     const QStringList ids = QString::fromUtf8(p.readAllStandardOutput()).split('\n', Qt::SkipEmptyParts);
-    for (AppEntry &a : m_apps) a.installed = ids.contains(a.flatpakId);
+    for (AppEntry &a : m_apps) a.installed = a.exec.isEmpty() ? ids.contains(a.flatpakId) : QFile::exists(a.exec);
 }
 void AppModel::refreshRunning() {
     const QStringList ids = m_sway->appIds();
@@ -139,12 +149,12 @@ void AppModel::hide(int row) {
 }
 void AppModel::unhide(const QString &key) {
     m_hidden.removeAll(key);
-    for (AppEntry &a : m_apps) if (keyOf(a) == key) { a.hidden = false; if (!a.webUrl.isEmpty() && !m_shown.contains(key)) m_shown << key; }
+    for (AppEntry &a : m_apps) if (keyOf(a) == key) { a.hidden = false; if ((!a.webUrl.isEmpty() || !a.exec.isEmpty()) && !m_shown.contains(key)) m_shown << key; }
     save(); qInfo() << "apps: unhid" << key; rebuildRows(); emit changed();
 }
 QVariantList AppModel::catalogue() const {
     QVariantList l;
-    for (const AppEntry &a : m_apps) l << QVariantMap{{"name", a.name}, {"key", keyOf(a)}, {"flatpakId", a.flatpakId}, {"installed", a.installed}, {"hidden", a.hidden}, {"onRow", onRow(a)}, {"web", !a.webUrl.isEmpty()}, {"note", a.note}};
+    for (const AppEntry &a : m_apps) l << QVariantMap{{"name", a.name}, {"key", keyOf(a)}, {"flatpakId", a.flatpakId}, {"installed", a.installed}, {"hidden", a.hidden}, {"onRow", onRow(a)}, {"web", !a.webUrl.isEmpty()}, {"native", !a.exec.isEmpty()}, {"note", a.note}};
     return l;
 }
 void AppModel::runFlatpak(const QString &label, const QStringList &args, const QString &flatpakId) {
@@ -170,6 +180,7 @@ void AppModel::install(const QString &flatpakId) {
 }
 void AppModel::uninstall(int row) {
     if (row < 0 || row >= m_rows.size()) return;
+    if (!m_apps[m_rows[row]].exec.isEmpty()) { qInfo() << "apps: native app is part of the image, hiding instead:" << m_apps[m_rows[row]].name; hide(row); return; }
     const QString id = m_apps[m_rows[row]].flatpakId;
     runFlatpak("Removing", {"--user", "uninstall", "-y", "--noninteractive", id}, id);
 }

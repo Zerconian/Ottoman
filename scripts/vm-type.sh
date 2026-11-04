@@ -12,6 +12,7 @@ for ((i=0; i<${#s}; i++)); do
     [A-Z]) key "shift-$(tr 'A-Z' 'a-z' <<<"$c")" ;;
     .) key dot ;; ,) key comma ;; -) key minus ;; _) key shift-minus ;; :) key shift-semicolon ;; /) key slash ;;
     ' ') key spc ;; @) key shift-2 ;; '!') key shift-1 ;; '=') key equal ;; '+') key shift-equal ;;
+    '$') key shift-4 ;; '?') key shift-slash ;; ';') key semicolon ;; '*') key shift-8 ;; '"') key shift-apostrophe ;; "'") key apostrophe ;;
     *) echo "vm-type: no mapping for '$c'" >&2; exit 2 ;;
   esac
 done

@@ -1,0 +1,38 @@
+# Ottoman installer boot menu (grub gfxmenu theme). gfxmenu is built into Fedora's signed EFI grub, unlike the
+# gfxterm_background module, so a theme is the Secure-Boot-safe way to put an image behind the menu (2026-11-04).
+desktop-image: "background.png"
+desktop-color: "#101214"
+title-text: ""
+terminal-font: "Unicode Regular 16"
+# grub prints "Booting ..." into its terminal view after a choice. The view enforces at least 80x24 cells of the terminal font
+# (about 640x410 px) and re-centres anything smaller, so the terminal gets the bottom 45% of the screen; the background
+# is black below the top quarter, so the box blends in wherever grub puts it (bottom at 1080p, re-centred at 800p).
+terminal-left: "0"
+terminal-top: "55%"
+terminal-width: "100%"
+terminal-height: "45%"
+terminal-border: "0"
++ boot_menu {
+  left = 30%
+  top = 40%
+  width = 40%
+  height = 30%
+  item_font = "Unicode Regular 16"
+  item_color = "#8a8f98"
+  selected_item_color = "#ffffff"
+  selected_item_pixmap_style = "select_*.png"
+  item_height = 30
+  item_padding = 6
+  item_spacing = 8
+  scrollbar = false
+}
++ label {
+  id = "__timeout__"
+  top = 84%
+  left = 0
+  width = 100%
+  align = "center"
+  color = "#555a63"
+  font = "Unicode Regular 16"
+  text = "Installing in %d seconds. Everything on the first disk will be erased."
+}

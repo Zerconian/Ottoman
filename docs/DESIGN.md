@@ -297,6 +297,35 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   218 s and reached the launcher with the six apps at 313 s, the box boots the CI-built digest c9ebc12e1204 with
   build-info commit=cd0f5bb and answers `bootc upgrade --check` with "No changes" and no credential.
 
+### 4.15 Plezy and the boot screens (zerc, 2026-11-04 20:4x UTC)
+- **Plezy** (open-source Plex + Jellyfin + Emby client, GPL-3.0, Flutter + libmpv, v2.25.0, not on Flathub): shipped as
+  an **opt-in native tile**. The release RPM is layered into the image with a sha256 pin (`PLEZY_VERSION`,
+  `PLEZY_SHA256` build args; it bundles its own libmpv under /opt/plezy), the catalogue gained a native-app kind
+  (`exec` path: installed = the file exists, icon from the system hicolor theme by binary name, key `native:<slug>`,
+  opt-in like the web tiles, "Uninstall" hides instead since it is part of the image), and a wrapper
+  (`/usr/libexec/ottoman/plezy.sh`) sets Plezy's `force_tv_mode` preference before each start so the 10-foot layout is
+  the default (key read from the app binary; Plezy's own settings can still change it). Sway app_id measured:
+  `com.edde746.plezy`. Proven on the VM: Add app lists it as "Not on the row", OK writes `shown=native:plezy`, the
+  tile shows Plezy's own icon, launches to its sign-in screen (Plex, QR, Jellyfin, Emby), Home returns, the tile
+  resumes the running window (`resume "com.edde746.plezy"` in the journal). TV layout proven
+  21:0x UTC: with the preferences file removed, a tile launch went through the wrapper (`launch "Plezy"`), the file then
+  held `force_tv_mode = True`, and the frame shows Plezy's dark TV layout ("Use browser" instead of the desktop QR
+  option, focus ring on Sign in with Plex).
+  Not yet proven: playback and hardware decoding (needs a signed-in server; the dev Jellyfin at the build host is the
+  candidate), whether it should replace Plex HTPC or Jellyfin Desktop as a default (decide after the Tiny).
+- **Installer boot screen.** Fedora's signed EFI grub carries no module directory and `gfxterm_background` is not
+  built in, so `background_image` can never work there (measured in the grub shell: "can't find command"); `gfxmenu`
+  is built in, so the branding is a theme (`image/installer/grub/theme.txt` + `background.png`): the OTTOMAN wordmark
+  over a short gradient, the three entries, a countdown that says "Installing in N seconds. Everything on the first
+  disk will be erased." After the choice grub prints "Booting ..." into its terminal view, which the view code forces
+  to at least 80x24 cells of the only font on the ISO (about 640x410 px) and re-centres when smaller, so the theme
+  gives it the bottom 45 % and the background is black below the top quarter: the box blends in at 1080p and at 800p
+  alike, the wordmark stays, the line itself is dark grey. Five boot-frame iterations on QEMU; the firmware's own
+  screen before grub is untouched.
+- **Installed box:** `set color_normal=black/black` in bootupd's static grub config (the one-second "Booting" line
+  before Plymouth prints black on black; Shift still shows the menu in its own colours; a grub error would also be
+  invisible, accepted). GRUB_BOX_PROOF
+
 ### 4.14 Public-repo hygiene (zerc, 2026-11-04 19:1x UTC: "make sure there's nothing PII related in the repo")
 - Sweep over all 130 public commits and the tree: authors, e-mail addresses, IPv4, hostnames, keys and tokens, MAC
   addresses, family/location words, rare capitalised words, home paths. Clean except three residues, all removed by a

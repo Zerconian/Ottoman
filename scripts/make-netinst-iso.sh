@@ -47,7 +47,16 @@ edit_grub() {
     -e "s/'Install Fedora $FEDORA'/'Install Ottoman'/" -e "s/'Test this media & install Fedora $FEDORA'/'Test this media \& install Ottoman'/" \
     -e "s/'Install Fedora $FEDORA in basic graphics mode'/'Install Ottoman in basic graphics mode'/" -e "s/'Rescue a Fedora system'/'Rescue an Ottoman system'/" \
     -e "/^\s*linux .*inst\.rescue/!s|^\(\s*linux .*\) quiet$|\1 inst.ks=hd:LABEL=$VOLID:/ottoman.ks quiet rhgb|" "$1"
-  grep -q "^set timeout=$TIMEOUT$" "$1" && grep -q '^set default="0"$' "$1" && [ "$(grep -c "inst.ks=hd:LABEL=$VOLID:/ottoman.ks quiet rhgb$" "$1")" -eq 3 ] && ! grep -q "Fedora $FEDORA'" "$1" \
+  # Branded boot screen (zerc 2026-11-04): gfxmenu theme (built into the signed EFI grub; gfxterm_background is not, so
+  # background_image cannot work there) with the Ottoman background, and the "Booting ..." line in dark grey. After the search line (paths need $root).
+  sed -i "/^search --no-floppy --set=root/a\\
+insmod gfxterm\\
+insmod png\\
+if loadfont /EFI/BOOT/fonts/unicode.pf2; then insmod gfxmenu; terminal_output gfxterm; set theme=/ottoman-theme/theme.txt; export theme; fi\\
+set color_normal=dark-gray/black\\
+set menu_color_normal=light-gray/black\\
+set menu_color_highlight=black/light-gray" "$1"
+  grep -q "^set timeout=$TIMEOUT$" "$1" && grep -q '^set default="0"$' "$1" && [ "$(grep -c "inst.ks=hd:LABEL=$VOLID:/ottoman.ks quiet rhgb$" "$1")" -eq 3 ] && ! grep -q "Fedora $FEDORA'" "$1" && grep -q "set theme=/ottoman-theme/theme.txt" "$1" \
     || { echo "netinst: grub edit failed in $1" >&2; exit 1; }
 }
 for f in efi-tree-grub.cfg bios-grub.cfg efi-img-grub.cfg; do edit_grub "$W/$f"; done
@@ -62,7 +71,7 @@ mkdir -p "$(dirname "$OUT")"; rm -f "$OUT"   # xorriso refuses to overwrite an e
 xorriso -indev "$NETINST_ISO" -outdev "$OUT" -boot_image any replay \
   -append_partition 2 "$EFI_GUID" "$W/efiboot.img" -boot_image any efi_path=--interval:appended_partition_2:all:: \
   -map "$W/efi-tree-grub.cfg" /EFI/BOOT/grub.cfg -map "$W/bios-grub.cfg" /boot/grub2/grub.cfg \
-  -map "$W/ottoman.ks" /ottoman.ks -map "$W/product.img" /images/product.img >"$W/xorriso.log" 2>&1 \
+  -map "$W/ottoman.ks" /ottoman.ks -map "$W/product.img" /images/product.img -map image/installer/grub/theme.txt /ottoman-theme/theme.txt -map image/installer/grub/background.png /ottoman-theme/background.png >"$W/xorriso.log" 2>&1 \
   || { echo "netinst: xorriso failed:"; tail -5 "$W/xorriso.log"; exit 1; }
 # ---- proof on the result
 xorriso -indev "$OUT" -report_el_torito plain 2>/dev/null | grep -q "UEFI" || { echo "netinst: no UEFI boot image in the result" >&2; exit 1; }

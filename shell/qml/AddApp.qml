@@ -12,7 +12,7 @@ Rectangle {
         for (const a of apps.catalogue()) {
             const sub = a.web ? "Streams in Firefox" + (a.note ? ", " + a.note.charAt(0).toLowerCase() + a.note.slice(1) : "") : a.note
             if (a.onRow) items.push({label: a.name, sub: sub, value: "On the row", action: "", web: a.web})
-            else if (a.installed) items.push({label: a.name, sub: sub, value: a.web ? "Not on the row" : "Hidden", action: "unhide", id: a.key, web: a.web})
+            else if (a.installed) items.push({label: a.name, sub: sub, value: (a.web || a.native) && !a.hidden ? "Not on the row" : "Hidden", action: "unhide", id: a.key, web: a.web})
             else items.push({label: a.name, sub: sub, value: "Not installed", action: "install", id: a.flatpakId, key: a.key, web: a.web})
         }
         list.items = items
