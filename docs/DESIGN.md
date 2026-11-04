@@ -287,6 +287,18 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   goes green on the mirror (mirror pending: the token needed the Workflows permission); (4) DONE: the test VM is that
   public install and follows `:stable`.
 
+### 4.14 Public-repo hygiene (zerc, 2026-11-04 19:1x UTC: "make sure there's nothing PII related in the repo")
+- Sweep over all 130 public commits and the tree: authors, e-mail addresses, IPv4, hostnames, keys and tokens, MAC
+  addresses, family/location words, rare capitalised words, home paths. Clean except three residues, all removed by a
+  second rewrite the same hour: the dev VM's SSH public key in six old file versions (its comment named the build host),
+  the build host's name in 45 old lines and two commit messages, and 17 Claude session links in commit messages. The
+  dev VM key pair was rotated the same hour, so the key that sat in the old history matches nothing.
+- Rules from here: commits are authored as the project's GitHub noreply identity; commit messages carry no session links
+  and no machine names; machine-specific values (login user, LAN address, SSH key) live in `.ottoman-dev.env`, never in
+  git. Local git hooks enforce the first two on the build host.
+- What a rewrite cannot do: GitHub may keep unreferenced commits reachable by hash until its garbage collection runs;
+  the repo was an hour old with one reader at the time, so no support request was filed.
+
 ### 4.12 UI polish log
 - 2026-11-04 15:4x UTC, UI pass (zerc: "refinement and validation so it's not quite so rough around the edges").
   Audit first: every launcher screen captured on the installed VM at 1920x1080 (the VM had been running at
