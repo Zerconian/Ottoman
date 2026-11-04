@@ -90,7 +90,8 @@ Window {
                     model: jellyfin.state === "connected" ? jellyfin.continueModel : signInModel
                     highlightMoveDuration: 0; preferredHighlightBegin: 0; preferredHighlightEnd: width - 60; highlightRangeMode: ListView.ApplyRange
                     delegate: Card { title: model.name; subtitle: model.subtitle; imageUrl: model.imageUrl; progress: model.progress; current: ListView.isCurrentItem && contRow.activeFocus
-                        tint: "#00a4dc"; iconUrl: jellyfin.state === "connected" ? "" : apps.iconUrlFor("org.jellyfin.JellyfinDesktop")
+                        // apps.installedCount is in the expression only so the lookup re-runs after Jellyfin installs (fresh install showed an "S" plate, 2026-11-04)
+                        tint: "#00a4dc"; iconUrl: jellyfin.state === "connected" || apps.installedCount < 0 ? "" : apps.iconUrlFor("org.jellyfin.JellyfinDesktop")
                         MouseArea { anchors.fill: parent; onClicked: { contRow.currentIndex = index; contRow.activate() } } }
                     function activate() { if (currentIndex < 0) currentIndex = 0; if (jellyfin.state === "connected") jellyfin.play(jellyfin.continueModel.idAt(currentIndex)); else signIn.visible = true }
                     Keys.onReturnPressed: activate()

@@ -272,7 +272,11 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   Setup to the launcher with the six default apps at 282 s, `bootc status` image ref `<build-host>:18821/ottoman:dev`
   transport registry, hidden grub, PRETTY_NAME Ottoman (scripts/test-install.sh, 104 frames). Two traps on the way:
   the stock menu defaults to the media check, which fails on a rewritten ISO (default is now the install entry), and
-  xorriso refuses to overwrite an existing output (removed first); (2) first push to ghcr by hand from the build host, then the public
+  xorriso refuses to overwrite an existing output (removed first). Second run 17:0x UTC after two frame findings:
+  the stock runtime's header said FEDORA 44 INSTALLATION (a `.buildstamp` in the product.img overlay now reads
+  OTTOMAN 44 INSTALLATION, frame 060) and the fresh-install sign-in card showed an "S" plate because the Jellyfin
+  icon lookup never re-ran after the install (binding depends on apps.installedCount now; frame 109 shows the icon);
+  install 187 s, launcher 301 s; (2) first push to ghcr by hand from the build host, then the public
   netinstall ISO installs on the VM and `bootc upgrade --check` works with no credential; (3) the GitHub workflow
   goes green on the mirror; (4) the installed test VM follows `ghcr.io/zerconian/ottoman:stable`.
 
