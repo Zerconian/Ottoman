@@ -11,6 +11,8 @@ FROM quay.io/fedora/fedora-bootc:44
 # DEV=1 (scripts/build-image.sh default) marks the build host's dev registry insecure so dev installs can pull updates.
 # It lives in /etc inside the image, so every dev image carries it across upgrades and a release image drops it.
 ARG DEV=0
+# Links the ghcr package to the repository on push (permissions and visibility then follow the repo), and names the source.
+LABEL org.opencontainers.image.source="https://github.com/Zerconian/Ottoman" org.opencontainers.image.description="Ottoman: a minimal remote-first TV OS for leftover x86 mini PCs" org.opencontainers.image.licenses="MIT"
 ARG DEV_USER=dev
 # dev builds: insecure registries the test boxes may pull from (QEMU user-net gateway + the build host's LAN address)
 ARG DEV_REGISTRIES="10.0.2.2:18821"
