@@ -55,7 +55,7 @@ Window {
         Column {
             id: content; x: 48; spacing: 40
             // APPS
-            Column { id: appsBlock; spacing: 12
+            Column { id: appsBlock; spacing: 12; opacity: win.rowIndex === 0 ? 1 : 0.45; Behavior on opacity { NumberAnimation { duration: 180 } }
                 Text { text: "Apps"; color: "#c9ccd2"; font.pixelSize: 24; font.weight: Font.Medium }
                 ListView {
                     id: appsRow; width: win.width - 48; height: 190; orientation: ListView.Horizontal; spacing: 24; clip: false
@@ -80,7 +80,7 @@ Window {
                 }
             }
             // CONTINUE WATCHING
-            Column { id: contBlock; spacing: 12
+            Column { id: contBlock; spacing: 12; opacity: win.rowIndex === 1 ? 1 : 0.45; Behavior on opacity { NumberAnimation { duration: 180 } }
                 Row { spacing: 16
                     Text { text: "Continue watching"; color: "#c9ccd2"; font.pixelSize: 24; font.weight: Font.Medium }
                     Text { text: jellyfin.state === "connected" ? "" : "not signed in to Jellyfin"; color: "#555a63"; font.pixelSize: 18; anchors.verticalCenter: parent.verticalCenter }
@@ -100,7 +100,7 @@ Window {
                 }
             }
             // RECENTLY ADDED
-            Column { id: latestBlock; spacing: 12; visible: jellyfin.state === "connected"
+            Column { id: latestBlock; spacing: 12; opacity: win.rowIndex === 2 ? 1 : 0.45; visible: jellyfin.state === "connected"; Behavior on opacity { NumberAnimation { duration: 180 } }
                 Text { text: "Recently added"; color: "#c9ccd2"; font.pixelSize: 24; font.weight: Font.Medium }
                 ListView {
                     id: latestRow; width: win.width - 48; height: 225; orientation: ListView.Horizontal; spacing: 24; clip: false
@@ -117,9 +117,9 @@ Window {
         // keep the focused row in view
         onHeightChanged: contentY = 0
     }
-    // The focused row scrolls up to just under the header, leaving the bottom of the row above peeking in
+    // The focused row scrolls up to just under the header, leaving the name plates of the row above peeking in, dimmed
     // (a cue that there is more up there). Positions come from the blocks, not fixed numbers.
-    onRowIndexChanged: page.contentY = rowIndex === 0 ? 0 : Math.max(0, blocks()[rowIndex].y - 110)
+    onRowIndexChanged: page.contentY = rowIndex === 0 ? 0 : Math.max(0, blocks()[rowIndex].y - 130)
     // Row models swap when Jellyfin connects or signs out, which drops keyboard focus: re-focus the current row.
     // Re-focus the home rows after a Jellyfin state change, but never steal focus from an open overlay
     // (signing out from Settings > About used to drop focus behind the Settings page).

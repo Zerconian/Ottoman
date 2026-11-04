@@ -68,7 +68,7 @@ Rectangle {
         const it = options.items[i]; if (!it || !it.action) return
         if (it.action === "scan") { message = "Scanning..."; wifi = system.wifiList(); reload(); message = wifi.length + " networks" }
         else if (it.action === "join") { if (it.security) { joinSsid = it.ssid; joinPass.text = ""; joinPanel.visible = true; joinPass.inputItem.forceActiveFocus() } else system.wifiJoin(it.ssid, "") }
-        else if (it.action === "modes") { sub = "modes"; subOutput = it.output; reload(); let c = 0; for (let k = 0; k < options.items.length; k++) if (options.items[k].value === "current") c = k; options.currentIndex = c; system.log("settings modes open") }
+        else if (it.action === "modes") { sub = "modes"; subOutput = it.output; reload(); let c = 0; for (let k = 0; k < options.items.length; k++) if (options.items[k].value === "current") c = k; options.currentIndex = c; options.positionViewAtIndex(c, ListView.Center); system.log("settings modes open") }
         else if (it.action === "mode") { if (it.mode === it.previous) return; if (system.setMode(it.output, it.mode)) { pendingMode = {output: it.output, mode: it.mode, previous: it.previous}; revertLeft = 10; revertTimer.start(); message = "Keeping this mode? Enter to keep, reverting in 10 s" } else { pendingMode = null; message = "Could not set " + it.label.trim() } }
         else if (it.action === "sink") { system.setDefaultSink(it.id); reload() }
         else if (it.action === "savermode") { const m = ["clock", "aurora", "stars"]; system.setSaverMode(m[(m.indexOf(it.mode) + 1) % m.length]); reload() }
