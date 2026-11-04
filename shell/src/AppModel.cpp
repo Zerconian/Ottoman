@@ -18,19 +18,19 @@ AppModel::AppModel(Sway *sway, QObject *parent) : QAbstractListModel(parent), m_
         // VacuumTube ships with --socket=x11 and the session has no XWayland: force Wayland (crashed in zypak otherwise, 2026-11-03).
         {"YouTube",   "rocks.shy.VacuumTube",          "rocks.shy.VacuumTube",          "#c4302b", {}, {"--nosocket=x11", "--socket=wayland"}, "", "", true},
         // Streaming sites run through webapp.sh in Firefox kiosk (DESIGN.md 4.5). Same Flatpak, own profile each.
-        {"Netflix",   "org.mozilla.firefox", "org.mozilla.firefox", "#b1060f", {}, {}, "https://www.netflix.com/browse", "up to 1080p (Widevine L3)", true},
-        {"Disney+",   "org.mozilla.firefox", "org.mozilla.firefox", "#0a3d91", {}, {}, "https://www.disneyplus.com/home", "up to 1080p (Widevine L3)"},
-        {"Max",       "org.mozilla.firefox", "org.mozilla.firefox", "#5b2ccd", {}, {}, "https://play.max.com", "up to 1080p (Widevine L3)"},
+        {"Netflix",   "org.mozilla.firefox", "org.mozilla.firefox", "#b1060f", {}, {}, "https://www.netflix.com/browse", "Up to 1080p", true},
+        {"Disney+",   "org.mozilla.firefox", "org.mozilla.firefox", "#0a3d91", {}, {}, "https://www.disneyplus.com/home", "Up to 1080p"},
+        {"Max",       "org.mozilla.firefox", "org.mozilla.firefox", "#5b2ccd", {}, {}, "https://play.max.com", "Up to 1080p"},
         // More web players, all opt-in via Add app; same runner, same cap. Tubi and Pluto need no account (testable).
-        {"Hulu",        "org.mozilla.firefox", "org.mozilla.firefox", "#1ce783", {}, {}, "https://www.hulu.com/hub/home", "up to 1080p (Widevine L3)"},
-        {"Tubi",        "org.mozilla.firefox", "org.mozilla.firefox", "#fa382f", {}, {}, "https://tubitv.com/home", "free, up to 1080p"},
-        {"Pluto TV",    "org.mozilla.firefox", "org.mozilla.firefox", "#f5c518", {}, {}, "https://pluto.tv/live-tv", "free, up to 1080p"},
-        {"Discovery+",  "org.mozilla.firefox", "org.mozilla.firefox", "#1e4ed8", {}, {}, "https://www.discoveryplus.com/home", "up to 1080p (Widevine L3)"},
-        {"Peacock",     "org.mozilla.firefox", "org.mozilla.firefox", "#0b0b0b", {}, {}, "https://www.peacocktv.com/watch/home", "up to 1080p (Widevine L3)"},
-        {"Paramount+",  "org.mozilla.firefox", "org.mozilla.firefox", "#0064ff", {}, {}, "https://www.paramountplus.com/home/", "up to 1080p (Widevine L3)"},
-        {"Crunchyroll", "org.mozilla.firefox", "org.mozilla.firefox", "#f47521", {}, {}, "https://www.crunchyroll.com/", "up to 1080p (Widevine L3)"},
-        {"Prime Video", "org.mozilla.firefox", "org.mozilla.firefox", "#00a8e1", {}, {}, "https://www.primevideo.com/", "Linux browsers get SD/720p"},
-        {"Sling TV",    "org.mozilla.firefox", "org.mozilla.firefox", "#1d7cf2", {}, {}, "https://watch.sling.com/", "up to 1080p (Widevine L3)"},
+        {"Hulu",        "org.mozilla.firefox", "org.mozilla.firefox", "#1ce783", {}, {}, "https://www.hulu.com/hub/home", "Up to 1080p"},
+        {"Tubi",        "org.mozilla.firefox", "org.mozilla.firefox", "#fa382f", {}, {}, "https://tubitv.com/home", "Free, up to 1080p"},
+        {"Pluto TV",    "org.mozilla.firefox", "org.mozilla.firefox", "#f5c518", {}, {}, "https://pluto.tv/live-tv", "Free, up to 1080p"},
+        {"Discovery+",  "org.mozilla.firefox", "org.mozilla.firefox", "#1e4ed8", {}, {}, "https://www.discoveryplus.com/home", "Up to 1080p"},
+        {"Peacock",     "org.mozilla.firefox", "org.mozilla.firefox", "#0b0b0b", {}, {}, "https://www.peacocktv.com/watch/home", "Up to 1080p"},
+        {"Paramount+",  "org.mozilla.firefox", "org.mozilla.firefox", "#0064ff", {}, {}, "https://www.paramountplus.com/home/", "Up to 1080p"},
+        {"Crunchyroll", "org.mozilla.firefox", "org.mozilla.firefox", "#f47521", {}, {}, "https://www.crunchyroll.com/", "Up to 1080p"},
+        {"Prime Video", "org.mozilla.firefox", "org.mozilla.firefox", "#00a8e1", {}, {}, "https://www.primevideo.com/", "720p at most in a browser"},
+        {"Sling TV",    "org.mozilla.firefox", "org.mozilla.firefox", "#1d7cf2", {}, {}, "https://watch.sling.com/", "Up to 1080p"},
         {"RetroArch", "org.libretro.RetroArch",        "org.libretro.RetroArch",        "#6f42c1", {}, {}, "", "", true},
         {"Steam Link","com.valvesoftware.SteamLink",   "com.valvesoftware.SteamLink",   "#1b2838", {}, {}, "", "", true},
         {"Kodi",      "tv.kodi.Kodi",                  "tv.kodi.Kodi",                  "#17b2e7"},
@@ -203,4 +203,8 @@ void AppModel::nextInQueue() {
         p->deleteLater(); nextInQueue();
     });
     p->start(QStringLiteral("flatpak"), {"--user", "install", "-y", "--noninteractive", "flathub", id});
+}
+QString AppModel::iconUrlFor(const QString &flatpakId) const {
+    for (const AppEntry &a : m_apps) if (a.flatpakId == flatpakId) return iconFor(a);
+    return {};
 }

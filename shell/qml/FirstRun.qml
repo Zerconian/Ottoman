@@ -70,12 +70,9 @@ Rectangle {
         onActiveFocusChanged: if (activeFocus && items[currentIndex]) system.log("firstrun focus " + currentIndex + " " + items[currentIndex].label)
         onCurrentIndexChanged: if (activeFocus && items[currentIndex]) system.log("firstrun option " + currentIndex + " " + items[currentIndex].label) }
     Text { text: page.message.length ? page.message : (page.prefetching && !page.setup ? "Downloading the default apps in the background (" + page.prefetchDone + " of " + page.setupRows.length + " done). Continue whenever you like." : ""); color: "#d8dadf"; font.pixelSize: 22; anchors { left: parent.left; bottom: parent.bottom; margins: 48 } }
-    Rectangle { id: joinPanel; visible: false; anchors.fill: parent; color: "#e6101214"
-        Column { anchors.centerIn: parent; spacing: 18
-            Text { text: "Join " + page.joinSsid; color: "#f2f2f2"; font.pixelSize: 32; font.bold: true }
-            Field { id: joinPass; label: "Password"; password: true; onAccepted: system.wifiJoin(page.joinSsid, joinPass.text) }
-            Text { text: "Enter joins. Escape cancels."; color: "#8a8f98"; font.pixelSize: 18 }
-        }
+    Item { id: joinPanel; visible: false; anchors.fill: parent
+        Dialog { title: "Join " + page.joinSsid; hint: "Menu on the remote opens the keyboard. Enter joins, Back cancels."
+            Field { id: joinPass; label: "Password"; password: true; onAccepted: system.wifiJoin(page.joinSsid, joinPass.text) } }
         Keys.onEscapePressed: { visible = false; list.forceActiveFocus() }
     }
 }

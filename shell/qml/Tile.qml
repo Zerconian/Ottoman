@@ -41,7 +41,7 @@ Rectangle {
         spacing: 1
         Text { anchors.horizontalCenter: parent.horizontalCenter; text: (tile.isAdd ? "+  " : "") + tile.label
                color: tile.isAdd ? "#9aa0a8" : (installed ? "#f4f5f7" : "#9aa0a8"); font.pixelSize: tile.isAdd ? 26 : (tile.hasArt ? 21 : 32); font.bold: !tile.isAdd }
-        Text { visible: tile.note.length > 0 && tile.installed; anchors.horizontalCenter: parent.horizontalCenter; text: tile.note; color: "#cfd3d9"; font.pixelSize: 12 }
+        Text { visible: tile.note.length > 0 && tile.installed; anchors.horizontalCenter: parent.horizontalCenter; text: tile.note; color: "#cfd3d9"; font.pixelSize: 15 }
     }
     Rectangle { visible: running; width: 12; height: 12; radius: 6; color: "#3ddc84"; anchors { right: parent.right; top: parent.top; margins: 12 } }
 }

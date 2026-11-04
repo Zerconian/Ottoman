@@ -26,6 +26,7 @@ public:
     Q_INVOKABLE void move(int row, int delta);
     Q_INVOKABLE void hide(int row);
     Q_INVOKABLE void uninstall(int row);
+    Q_INVOKABLE QString iconUrlFor(const QString &flatpakId) const;   // the installed Flatpak's icon, or empty
     Q_INVOKABLE QVariantList catalogue() const;        // every catalogue app: {name, key, flatpakId, installed, hidden, onRow, web, note}
     Q_INVOKABLE void install(const QString &flatpakId);
     Q_INVOKABLE void unhide(const QString &key);       // key: flatpakId, or web:<slug> for a streaming site (they all share Firefox)

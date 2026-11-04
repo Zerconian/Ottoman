@@ -8,6 +8,7 @@ Window {
     title: "Ottoman"
     property int rowIndex: 0            // 0 apps, 1 continue, 2 latest
     function rows() { return [appsRow, contRow, latestRow] }
+    function blocks() { return [appsBlock, contBlock, latestBlock] }
     function focusRow(i) {
         const r = rows(); const dir = i >= rowIndex ? 1 : -1
         i = Math.max(0, Math.min(r.length - 1, i))
@@ -25,10 +26,17 @@ Window {
     property bool keepOnActivate: false
     onActiveChanged: if (active) { if (keepOnActivate) keepOnActivate = false; else goHome() }
     Connections { target: control; function onHomeRequested() { goHome() } }     // home.sh over D-Bus, works when already active
+
+    // Header line: wordmark left; Jellyfin user, Settings and the clock right, all on one baseline.
     Text { text: "OTTOMAN"; color: "#8a8f98"; font.pixelSize: 28; font.letterSpacing: 6; anchors { left: parent.left; top: parent.top; margins: 48 } }
-    // Header bar: Up from the APPS row reaches Settings.
-    Rectangle { id: settingsBtn; width: 170; height: 48; radius: 8; anchors { right: parent.right; top: parent.top; rightMargin: 48; topMargin: 118 }
-        color: activeFocus ? "#ffffff" : "#1c2026"; border.width: 1; border.color: "#3a3f47"
+    Text {
+        id: clock; color: "#d8dadf"; font.pixelSize: 30
+        anchors { right: parent.right; top: parent.top; margins: 48 }
+        Timer { interval: 1000; running: true; repeat: true; triggeredOnStart: true; onTriggered: clock.text = Qt.formatTime(new Date(), "HH:mm") }
+    }
+    // Up from the APPS row reaches Settings.
+    Rectangle { id: settingsBtn; width: 150; height: 44; radius: 22; anchors { right: clock.left; verticalCenter: clock.verticalCenter; rightMargin: 32 }
+        color: activeFocus ? "#ffffff" : "#1c2026"; border.width: 1; border.color: activeFocus ? "#ffffff" : "#3a3f47"
         Text { anchors.centerIn: parent; text: "Settings"; font.pixelSize: 20; color: parent.activeFocus ? "#111" : "#d8dadf" }
         onActiveFocusChanged: if (activeFocus) system.log("home settings button")
         Keys.onDownPressed: focusRow(0)
@@ -36,24 +44,19 @@ Window {
         Keys.onEnterPressed: { settings.visible = true; settings.open() }
         MouseArea { anchors.fill: parent; onClicked: { settings.visible = true; settings.open() } }
     }
-    Text {
-        id: clock; color: "#d8dadf"; font.pixelSize: 30
-        anchors { right: parent.right; top: parent.top; margins: 48 }
-        Timer { interval: 1000; running: true; repeat: true; triggeredOnStart: true; onTriggered: clock.text = Qt.formatTime(new Date(), "HH:mm") }
-    }
-    Text { text: jellyfin.state === "connected" ? "Jellyfin: " + jellyfin.userName : ""; color: "#6b7079"; font.pixelSize: 18; anchors { right: settingsBtn.left; top: parent.top; rightMargin: 24; topMargin: 130 } }
+    Text { text: jellyfin.state === "connected" ? jellyfin.userName : ""; color: "#6b7079"; font.pixelSize: 18; anchors { right: settingsBtn.left; verticalCenter: clock.verticalCenter; rightMargin: 24 } }
 
     Flickable {
         id: page
         anchors { fill: parent; topMargin: 130 }
         contentHeight: content.height + 100
         clip: true
-        Behavior on contentY { NumberAnimation { duration: 150 } }
+        Behavior on contentY { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
         Column {
-            id: content; x: 48; spacing: 36
+            id: content; x: 48; spacing: 40
             // APPS
-            Column { spacing: 14
-                Text { text: "APPS"; color: "#8a8f98"; font.pixelSize: 22; font.letterSpacing: 3 }
+            Column { id: appsBlock; spacing: 12
+                Text { text: "Apps"; color: "#c9ccd2"; font.pixelSize: 24; font.weight: Font.Medium }
                 ListView {
                     id: appsRow; width: win.width - 48; height: 190; orientation: ListView.Horizontal; spacing: 24; clip: false
                     model: apps; focus: true; highlightMoveDuration: 0; preferredHighlightBegin: 0; preferredHighlightEnd: width - 60; highlightRangeMode: ListView.ApplyRange
@@ -77,16 +80,17 @@ Window {
                 }
             }
             // CONTINUE WATCHING
-            Column { spacing: 14
+            Column { id: contBlock; spacing: 12
                 Row { spacing: 16
-                    Text { text: "CONTINUE WATCHING"; color: "#8a8f98"; font.pixelSize: 22; font.letterSpacing: 3 }
-                    Text { text: jellyfin.state === "connected" ? "" : "Jellyfin not signed in"; color: "#555a63"; font.pixelSize: 18; anchors.verticalCenter: parent.verticalCenter }
+                    Text { text: "Continue watching"; color: "#c9ccd2"; font.pixelSize: 24; font.weight: Font.Medium }
+                    Text { text: jellyfin.state === "connected" ? "" : "not signed in to Jellyfin"; color: "#555a63"; font.pixelSize: 18; anchors.verticalCenter: parent.verticalCenter }
                 }
                 ListView {
                     id: contRow; width: win.width - 48; height: 225; orientation: ListView.Horizontal; spacing: 24; clip: false
                     model: jellyfin.state === "connected" ? jellyfin.continueModel : signInModel
                     highlightMoveDuration: 0; preferredHighlightBegin: 0; preferredHighlightEnd: width - 60; highlightRangeMode: ListView.ApplyRange
                     delegate: Card { title: model.name; subtitle: model.subtitle; imageUrl: model.imageUrl; progress: model.progress; current: ListView.isCurrentItem && contRow.activeFocus
+                        tint: "#00a4dc"; iconUrl: jellyfin.state === "connected" ? "" : apps.iconUrlFor("org.jellyfin.JellyfinDesktop")
                         MouseArea { anchors.fill: parent; onClicked: { contRow.currentIndex = index; contRow.activate() } } }
                     function activate() { if (currentIndex < 0) currentIndex = 0; if (jellyfin.state === "connected") jellyfin.play(jellyfin.continueModel.idAt(currentIndex)); else signIn.visible = true }
                     Keys.onReturnPressed: activate()
@@ -96,13 +100,13 @@ Window {
                 }
             }
             // RECENTLY ADDED
-            Column { spacing: 14; visible: jellyfin.state === "connected"
-                Text { text: "RECENTLY ADDED"; color: "#8a8f98"; font.pixelSize: 22; font.letterSpacing: 3 }
+            Column { id: latestBlock; spacing: 12; visible: jellyfin.state === "connected"
+                Text { text: "Recently added"; color: "#c9ccd2"; font.pixelSize: 24; font.weight: Font.Medium }
                 ListView {
                     id: latestRow; width: win.width - 48; height: 225; orientation: ListView.Horizontal; spacing: 24; clip: false
                     model: jellyfin.latestModel
                     highlightMoveDuration: 0; preferredHighlightBegin: 0; preferredHighlightEnd: width - 60; highlightRangeMode: ListView.ApplyRange
-                    delegate: Card { title: model.name; subtitle: model.subtitle; imageUrl: model.imageUrl; progress: model.progress; current: ListView.isCurrentItem && latestRow.activeFocus
+                    delegate: Card { title: model.name; subtitle: model.subtitle; imageUrl: model.imageUrl; progress: model.progress; current: ListView.isCurrentItem && latestRow.activeFocus; tint: "#00a4dc"
                         MouseArea { anchors.fill: parent; onClicked: { latestRow.currentIndex = index; jellyfin.play(jellyfin.latestModel.idAt(index)) } } }
                     Keys.onReturnPressed: jellyfin.play(jellyfin.latestModel.idAt(currentIndex))
                     Keys.onEnterPressed: jellyfin.play(jellyfin.latestModel.idAt(currentIndex))
@@ -113,12 +117,14 @@ Window {
         // keep the focused row in view
         onHeightChanged: contentY = 0
     }
-    onRowIndexChanged: page.contentY = rowIndex === 0 ? 0 : rowIndex === 1 ? 240 : 520
+    // The focused row scrolls up to just under the header, leaving the bottom of the row above peeking in
+    // (a cue that there is more up there). Positions come from the blocks, not fixed numbers.
+    onRowIndexChanged: page.contentY = rowIndex === 0 ? 0 : Math.max(0, blocks()[rowIndex].y - 110)
     // Row models swap when Jellyfin connects or signs out, which drops keyboard focus: re-focus the current row.
     // Re-focus the home rows after a Jellyfin state change, but never steal focus from an open overlay
     // (signing out from Settings > About used to drop focus behind the Settings page).
     Connections { target: jellyfin; function onChanged() { if (!signIn.visible && !settings.visible && !osk.visible && !firstRun.visible && !tileMenu.visible && !addApp.visible) Qt.callLater(function() { focusRow(rowIndex) }) } }
-    ListModel { id: signInModel; ListElement { name: "Sign in to Jellyfin"; subtitle: "Enter to connect your server"; imageUrl: ""; progress: 0 } }
+    ListModel { id: signInModel; ListElement { name: "Sign in to Jellyfin"; subtitle: "Your shows and movies land here"; imageUrl: ""; progress: 0 } }
     SignIn { id: signIn; visible: false; z: 50; onVisibleChanged: { if (!visible) focusRow(rowIndex); system.log("signin " + (visible ? "open" : "close")) } onDone: visible = false }
     Settings { id: settings; visible: false; z: 50; onPreviewRequested: win.keepOnActivate = true; onDone: { visible = false; focusRow(rowIndex) } }
     TileMenu { id: tileMenu; visible: false; z: 55; onDone: focusRow(0) }
@@ -128,13 +134,15 @@ Window {
     Item { id: osk; anchors.fill: parent; visible: false; z: 100
         property Item target
         property Item returnTo
-        function openFor(input) { target = input; returnTo = input; visible = true; kb.forceActiveFocus() }
+        function openFor(input, label) { target = input; returnTo = input; kb.label = label || ""; visible = true; kb.forceActiveFocus() }
         Rectangle { anchors.fill: parent; color: "#99000000" }
         Keyboard { id: kb; target: osk.target; anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 40 }
             onDone: { osk.visible = false; if (osk.returnTo) osk.returnTo.forceActiveFocus() } }
     }
+    // One quiet line of help for where the focus is. It changes with the row, so it never explains the whole UI at once.
     Text {
-        text: apps.installedCount === 0 ? "Installing Jellyfin from Flathub, this takes about a minute on first boot." : "Enter opens. Home returns here, apps keep running (green dot)."
+        text: apps.installedCount === 0 ? "Installing Jellyfin from Flathub, this takes about a minute on first boot."
+            : settingsBtn.activeFocus ? "" : rowIndex === 0 ? "OK opens an app. Hold OK for its options." : (jellyfin.state === "connected" ? "OK plays." : "OK signs in to your Jellyfin server.")
         color: "#6b7079"; font.pixelSize: 18
         anchors { left: parent.left; bottom: parent.bottom; margins: 48 }
     }

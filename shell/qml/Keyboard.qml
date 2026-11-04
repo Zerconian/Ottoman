@@ -1,10 +1,12 @@
 import QtQuick
 // On-screen keyboard for remotes: D-pad moves, Enter types, Back/Escape closes. Writes into `target` (a TextInput).
+// The field being edited sits behind the keyboard, so the text typed so far is echoed in a strip along the top.
 Rectangle {
     id: kb
     property Item target
+    property string label: ""
     signal done()
-    width: 1100; height: 330; radius: 12; color: "#1a1d22"; border.color: "#3a3f47"; border.width: 1
+    width: 1100; height: 410; radius: 12; color: "#1a1d22"; border.color: "#3a3f47"; border.width: 1
     property bool shift: false
     property var rows: [
         ["1","2","3","4","5","6","7","8","9","0","-","_"],
@@ -34,8 +36,14 @@ Rectangle {
     Keys.onSpacePressed: press()
     Keys.onEscapePressed: done()
     Keys.onBackPressed: done()
+    // what has been typed, as the field shows it (passwords stay dots)
+    Rectangle { x: 36; y: 24; width: parent.width - 72; height: 56; radius: 8; color: "#101214"; border.width: 1; border.color: "#2a2f38"
+        Text { text: kb.label; color: "#8a8f98"; font.pixelSize: 16; anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 } }
+        Text { text: (kb.target ? kb.target.displayText : "") + "|"; color: "#f2f2f2"; font.pixelSize: 24; elide: Text.ElideLeft
+               anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; leftMargin: 160; rightMargin: 16 } }
+    }
     Column {
-        anchors.centerIn: parent; spacing: 8
+        anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 24 } spacing: 8
         Repeater { model: kb.rows.length
             Row { spacing: 8; anchors.horizontalCenter: parent.horizontalCenter
                 property int ri: index
