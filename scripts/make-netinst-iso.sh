@@ -41,11 +41,13 @@ set -- $IV; dd if="$NETINST_ISO" of="$W/efiboot.img" bs=512 skip="$1" count=$(( 
 xorriso -osirrox on -indev "$NETINST_ISO" -extract /EFI/BOOT/grub.cfg "$W/efi-tree-grub.cfg" -extract /boot/grub2/grub.cfg "$W/bios-grub.cfg" >/dev/null 2>&1
 chmod u+w "$W"/*; mcopy -i "$W/efiboot.img" ::/EFI/BOOT/grub.cfg "$W/efi-img-grub.cfg"
 edit_grub() {
-  sed -i -e "s/^set timeout=60$/set timeout=$TIMEOUT/" \
+  # default entry 1 on the stock ISO is the media check, which fails on a rewritten ISO (its implanted md5 is stale):
+  # boot straight into the install (entry 0), the media-check entry stays in the menu for the curious.
+  sed -i -e "s/^set timeout=60$/set timeout=$TIMEOUT/" -e 's/^set default="1"$/set default="0"/' \
     -e "s/'Install Fedora $FEDORA'/'Install Ottoman'/" -e "s/'Test this media & install Fedora $FEDORA'/'Test this media \& install Ottoman'/" \
     -e "s/'Install Fedora $FEDORA in basic graphics mode'/'Install Ottoman in basic graphics mode'/" -e "s/'Rescue a Fedora system'/'Rescue an Ottoman system'/" \
     -e "/^\s*linux .*inst\.rescue/!s|^\(\s*linux .*\) quiet$|\1 inst.ks=hd:LABEL=$VOLID:/ottoman.ks quiet rhgb|" "$1"
-  grep -q "^set timeout=$TIMEOUT$" "$1" && [ "$(grep -c "inst.ks=hd:LABEL=$VOLID:/ottoman.ks quiet rhgb$" "$1")" -eq 3 ] && ! grep -q "Fedora $FEDORA'" "$1" \
+  grep -q "^set timeout=$TIMEOUT$" "$1" && grep -q '^set default="0"$' "$1" && [ "$(grep -c "inst.ks=hd:LABEL=$VOLID:/ottoman.ks quiet rhgb$" "$1")" -eq 3 ] && ! grep -q "Fedora $FEDORA'" "$1" \
     || { echo "netinst: grub edit failed in $1" >&2; exit 1; }
 }
 for f in efi-tree-grub.cfg bios-grub.cfg efi-img-grub.cfg; do edit_grub "$W/$f"; done
@@ -56,7 +58,7 @@ if [ -n "${INSECURE_REGISTRY:-}" ]; then mkdir -p "$W/overlay/etc/containers/reg
 ( cd "$W/overlay" && find . -type f | sed 's|^\./||' | cpio -o -H newc --quiet | gzip -9 ) > "$W/product.img"
 [ "$(zcat "$W/product.img" | cpio -t --quiet | wc -l)" -ge 2 ] || { echo "netinst: product.img is empty" >&2; exit 1; }
 # ---- write the ISO: replay the original boot setup, swap in the edited EFI partition, add the kickstart and overlay
-mkdir -p "$(dirname "$OUT")"
+mkdir -p "$(dirname "$OUT")"; rm -f "$OUT"   # xorriso refuses to overwrite an existing image
 xorriso -indev "$NETINST_ISO" -outdev "$OUT" -boot_image any replay \
   -append_partition 2 "$EFI_GUID" "$W/efiboot.img" -boot_image any efi_path=--interval:appended_partition_2:all:: \
   -map "$W/efi-tree-grub.cfg" /EFI/BOOT/grub.cfg -map "$W/bios-grub.cfg" /boot/grub2/grub.cfg \

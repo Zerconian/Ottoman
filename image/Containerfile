@@ -12,7 +12,8 @@ FROM quay.io/fedora/fedora-bootc:44
 # It lives in /etc inside the image, so every dev image carries it across upgrades and a release image drops it.
 ARG DEV=0
 ARG DEV_USER=dev
-ARG DEV_REGISTRIES="10.0.2.2:18821"   # dev builds: insecure registries the test boxes may pull from (QEMU user-net gateway + the build host's LAN address)
+# dev builds: insecure registries the test boxes may pull from (QEMU user-net gateway + the build host's LAN address)
+ARG DEV_REGISTRIES="10.0.2.2:18821"
 ARG GIT_SHA=unknown
 
 # RPM Fusion: Fedora proper ships no Intel VA-API drivers and strips H.264/HEVC from mesa's VA-API.

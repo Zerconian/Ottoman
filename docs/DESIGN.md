@@ -267,8 +267,12 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   docs lost the hostname. History: all commits carried a personal e-mail and eleven lines named the private
   hostname or LAN addresses, so the history is rewritten once (author to the GitHub noreply address, hostname and
   addresses to placeholders) into a new repo that becomes the origin; the old repo stays as the private archive.
-- **Proof plan:** (1) netinstall test ISO installs the dev image from the local registry on the VM, frames +
-  "Install finished" + first run (today); (2) first push to ghcr by hand from the build host, then the public
+- **Proofs:** (1) DONE 2026-11-04 17:0x UTC: the netinstall test ISO (dev image from the local registry, test user)
+  installed on the VM unattended: "Install finished" on serial at 181 s, ssh at 194 s, first run Language > Network >
+  Setup to the launcher with the six default apps at 282 s, `bootc status` image ref `<build-host>:18821/ottoman:dev`
+  transport registry, hidden grub, PRETTY_NAME Ottoman (scripts/test-install.sh, 104 frames). Two traps on the way:
+  the stock menu defaults to the media check, which fails on a rewritten ISO (default is now the install entry), and
+  xorriso refuses to overwrite an existing output (removed first); (2) first push to ghcr by hand from the build host, then the public
   netinstall ISO installs on the VM and `bootc upgrade --check` works with no credential; (3) the GitHub workflow
   goes green on the mirror; (4) the installed test VM follows `ghcr.io/zerconian/ottoman:stable`.
 
