@@ -334,6 +334,20 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   is insurance for slow disks and costs nothing. The visible residue zerc saw is the INSTALLER's (ISO reads are slow),
   which the theme handles. Hardware check on the Tiny still owed.
 
+- **Plezy playback proof (2026-11-04 21:2x-21:3x UTC, fresh VM install, dev image 7b3bf88fe6e9):** tile on the row via
+  Add app, launch, Connect to Jellyfin against the dev server, sign in, play two 20 s H.264 clips: frames at 3/6/8/13 s,
+  OSD 0:08 of 0:19, Jellyfin session PlayMethod DirectPlay, no transcode, item marked played. mpv runs `hwdec=auto`
+  (string in the app binary): it tried VA-API (the VM's virtio_gpu driver fails to init, so software decode; CPU 170 %
+  of one core for 640x360 with llvmpipe rendering). On the Tiny with i965 the same path should land on VA-API: hardware
+  proof owed.
+- **[D] Plezy TV layout drops typed text:** on the Jellyfin/Emby sign-in form the letters reach the app (Wayland trace
+  shows the key events; foot types fine; `GTK_IM_MODULE` makes no difference) and nothing appears; the desktop layout
+  takes them (Tab moves focus, typing works). Plex signs in by QR in either layout. The wrapper therefore forces the TV
+  layout only once a profile exists (`active_app_profile_id` appears at sign-in); until then Plezy runs its desktop
+  layout, which needs a keyboard (D-pad arrows do not move focus there). Upstream report pending (zerc's call).
+- Plezy ships Sentry telemetry (sentry threads live in the process; `crash_reporting` string in the binary, no visible
+  opt-out measured). Not Ottoman's data, but worth a line in the README when the tile goes default.
+
 ### 4.14 Public-repo hygiene (zerc, 2026-11-04 19:1x UTC: "make sure there's nothing PII related in the repo")
 - Sweep over all 130 public commits and the tree: authors, e-mail addresses, IPv4, hostnames, keys and tokens, MAC
   addresses, family/location words, rare capitalised words, home paths. Clean except three residues, all removed by a
