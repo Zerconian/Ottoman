@@ -362,7 +362,24 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   the line on update as well as on a fresh install (proven 2026-11-04 23:07Z: VM updated 7b3bf88fe6e9 -> 3ff3b96384d7 by
   `bootc upgrade`, `getent ahosts bugs.plezy.app` = 0.0.0.0 after the reboot, `ice.plezy.app` unchanged). README line
   owed if the tile goes default.
-
+- **[D] Fullscreen guard (found 2026-11-04 23:19Z):** sway's `for_window ... fullscreen enable` applies once, at map. An
+  app that drops its own fullscreen afterwards (Plezy did, after Esc presses at its home screen; the exact Plezy state
+  was not pinned down, a second Esc at its home quits the app) is tiled by sway beside the launcher, half the screen
+  each (`get_tree`: ottoman-shell x 0 w 640, Plezy x 640 w 640, both `fullscreen_mode` 0), and after an app quits the
+  launcher stays un-fullscreened (its fullscreen went when the app took it). Fix in the shell (`Sway::startFullscreenGuard`):
+  it subscribes to sway window events over the IPC socket (`SWAYSOCK`, i3-ipc framing, no swaymsg pipe buffering);
+  on any `fullscreen_mode` -> 0 event it waits 300 ms, reads `get_tree`, and if nothing visible is fullscreen gives it
+  to the focused app window. A Home hide (`move scratchpad` emits fs 0, then the launcher is shown fullscreen) and a new
+  app taking fullscreen (the old holder gets fs 0, the new one is fullscreen) both leave something fullscreen, so the
+  guard stays quiet there (event order measured with a `subscribe` log, scratch `sway-events.sh`). Proof on the VM,
+  2026-11-04 23:27Z, first build: launch from the tile = Plezy fullscreen, launcher hidden, no guard line; `fullscreen
+  disable` over IPC as the stand-in for an app dropping it = restored within 1.5 s with a journal line; Home suspend =
+  Plezy in the scratchpad, launcher fullscreen; resume = Plezy fullscreen (one benign extra restore of the launcher
+  logged during the Home transition). Not caught by that build: the app QUITTING (`kill` over IPC left the launcher
+  visible, focused, `fullscreen_mode` 0: sway emits `close`, no fullscreen event for the window underneath), so the
+  trigger set is now fullscreen_mode -> 0, close and focus. That second build compiled (load check ok) but its VM run
+  was stopped by the harness for host memory before the image built: close/focus triggers are UNPROVEN until
+  `scratchpad/guard-chain2.sh` is re-run.
 ### 4.14 Public-repo hygiene (zerc, 2026-11-04 19:1x UTC: "make sure there's nothing PII related in the repo")
 - Sweep over all 130 public commits and the tree: authors, e-mail addresses, IPv4, hostnames, keys and tokens, MAC
   addresses, family/location words, rare capitalised words, home paths. Clean except three residues, all removed by a

@@ -2,6 +2,8 @@
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QByteArray>
+class QLocalSocket;
 // Thin wrapper over swaymsg (SWAYSOCK is inherited from sway's exec). Every call logs its command and
 // result to stderr (the journal) so a stacking bug is visible without a debugger.
 class Sway : public QObject {
@@ -15,4 +17,15 @@ public:
     Q_INVOKABLE void showApp(const QString &appId) const;   // scratchpad show + fullscreen
     Q_INVOKABLE void killApp(const QString &appId) const;
     Q_INVOKABLE void focusShell() const;
+    // Fullscreen guard (DESIGN.md 4.15): an app that drops its own fullscreen (Plezy does on Esc) would otherwise sit
+    // tiled beside the launcher. Subscribes to sway window events over the IPC socket; when a window leaves fullscreen
+    // and 300 ms later nothing on the output is fullscreen, the focused app window gets it back. A hide (move
+    // scratchpad) or a new app taking fullscreen leaves something fullscreen, so the guard stays quiet for those.
+    void startFullscreenGuard();   // triggers: fullscreen_mode -> 0, close, focus
+private:
+    void onIpcReady();
+    void checkFullscreen();
+    QLocalSocket *m_ipc = nullptr;
+    QByteArray m_buf;
+    bool m_checkPending = false;
 };

@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
         return saverEngine.rootObjects().isEmpty() ? 1 : app.exec();
     }
     Sway sway;
+    sway.startFullscreenGuard();
     AppModel apps(&sway);
     Jellyfin jellyfin(&sway);
     ScreenSaverService screenSaver(&sway);
