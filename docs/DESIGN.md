@@ -277,11 +277,15 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   OTTOMAN 44 INSTALLATION, frame 060) and the fresh-install sign-in card showed an "S" plate because the Jellyfin
   icon lookup never re-ran after the install (binding depends on apps.installedCount now; frame 109 shows the icon);
   install 187 s, launcher 301 s; (2) PARTLY DONE 17:3x UTC: `ghcr.io/zerconian/ottoman:edge` (DEV=0) pushed by hand, zerc made the package
-  public, `skopeo inspect --no-creds` reads it anonymously (sha256:943d78c7...); the public netinstall ISO install
-  and a credential-free `bootc upgrade --check` on the VM follow the first real release; (2b) DONE 17:5x UTC: history
+  public, `skopeo inspect --no-creds` reads it anonymously (sha256:943d78c7...); then DONE 18:4x UTC after the first real release
+  (`scripts/release.sh`: `:stable` = `:20261104-47fce9b` @ 3fd632faefc5, public netinstall ISO 1.22 GB): a test ISO
+  pointing at `ghcr.io/zerconian/ottoman:stable` installed on the VM unattended (Install finished 192 s, launcher with
+  six apps 287 s), the box boots that reference, has no auth.json in /etc or /usr/lib/ostree, no dev registry conf, and
+  `bootc upgrade --check` answered "No changes in: docker://ghcr.io/zerconian/ottoman:stable" with no credential; (2b) DONE 17:5x UTC: history
   rewritten with git-filter-repo (127 commits, 159 private-name lines to 0, authors to the GitHub noreply address) and
   pushed to a fresh `zerc/Ottoman` on Gitea, the old repo renamed `Ottoman-archive`; (3) the GitHub workflow
-  goes green on the mirror; (4) the installed test VM follows `ghcr.io/zerconian/ottoman:stable`.
+  goes green on the mirror (mirror pending: the token needed the Workflows permission); (4) DONE: the test VM is that
+  public install and follows `:stable`.
 
 ### 4.12 UI polish log
 - 2026-11-04 15:4x UTC, UI pass (zerc: "refinement and validation so it's not quite so rough around the edges").
