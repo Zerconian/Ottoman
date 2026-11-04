@@ -291,7 +291,11 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   public install and follows `:stable`. (5) DONE 20:1x UTC: a `release-20261104-cd0f5bb` tag pushed to Gitea reached
   GitHub through the mirror (after a second sync: two syncs seconds apart race and the loser drops its tag), the workflow
   pushed `:stable` + `:20261104-cd0f5bb` and published GitHub Release 20261104-cd0f5bb with the 1.22 GB netinstall ISO
-  and its sha256; from here releases are tag pushes, `scripts/release.sh` is the hand fallback.
+  and its sha256; from here releases are tag pushes, `scripts/release.sh` is the hand fallback. (6) DONE 20:3x UTC, the
+  stranger's path: the ISO downloaded from the GitHub Release matched its attached sha256, its kickstart points at
+  `ghcr.io/zerconian/ottoman:stable`, a VM install from it (test login user added to a copy, nothing else) finished in
+  218 s and reached the launcher with the six apps at 313 s, the box boots the CI-built digest c9ebc12e1204 with
+  build-info commit=cd0f5bb and answers `bootc upgrade --check` with "No changes" and no credential.
 
 ### 4.14 Public-repo hygiene (zerc, 2026-11-04 19:1x UTC: "make sure there's nothing PII related in the repo")
 - Sweep over all 130 public commits and the tree: authors, e-mail addresses, IPv4, hostnames, keys and tokens, MAC
