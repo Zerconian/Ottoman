@@ -324,7 +324,15 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   screen before grub is untouched.
 - **Installed box:** `set color_normal=black/black` in bootupd's static grub config (the one-second "Booting" line
   before Plymouth prints black on black; Shift still shows the menu in its own colours; a grub error would also be
-  invisible, accepted). GRUB_BOX_PROOF
+  invisible, accepted). Proof 2026-11-04 20:3x-20:4x UTC on QEMU/OVMF: the line only
+  reaches FRESH installs (bootupd writes /boot/grub2/grub.cfg once, at install; a box updated by bootc keeps its old
+  grub.cfg, measured on the pre-fix install: 0 colour lines after switching to the fixed image). Fresh netinstall from
+  the fixed image (digest 7b3bf88fe6e9): grub.cfg carries the line, first boot 9.3 s to userspace. Reboot captured at
+  10 frames/s for 28 s, top 60 rows hashed per frame: firmware text (3.6 s) -> black -> Plymouth wordmark -> launcher,
+  no grub strip. Same box with the line sed-ed out of grub.cfg (then restored): the identical sequence. So on the VM
+  grub's "Booting" phase is shorter than 100 ms with timeout_style=hidden and nothing is visible either way; the line
+  is insurance for slow disks and costs nothing. The visible residue zerc saw is the INSTALLER's (ISO reads are slow),
+  which the theme handles. Hardware check on the Tiny still owed.
 
 ### 4.14 Public-repo hygiene (zerc, 2026-11-04 19:1x UTC: "make sure there's nothing PII related in the repo")
 - Sweep over all 130 public commits and the tree: authors, e-mail addresses, IPv4, hostnames, keys and tokens, MAC
