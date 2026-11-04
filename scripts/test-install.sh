@@ -8,7 +8,8 @@ cd "$(dirname "$0")/.."
 echo "pwd: $(pwd)  branch: $(git rev-parse --abbrev-ref HEAD)  head: $(git rev-parse --short HEAD)"
 export VMDIR=${VMDIR:-$HOME/.local/share/claude-scratch/ottoman/vm-iso}
 ISO=${ISO:-build/disk/bootiso/install.iso}
-SSH="ssh -i $HOME/.ssh/id_ed25519_ottoman -p 18822 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=3 zerc@127.0.0.1"
+. ./scripts/dev-env.sh
+SSH="ssh -i $DEV_SSH_IDENTITY -p 18822 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=3 $DEV_USER@127.0.0.1"
 T0=$(date +%s); F=$VMDIR/frames; rm -rf "$F"; mkdir -p "$F"; n=0
 frame() { printf 'screendump %s/%03d.ppm\n' "$F" "$n" | socat - UNIX-CONNECT:"$VMDIR/mon.sock" >/dev/null 2>&1; n=$((n+1)); }
 key() { ./scripts/vm-type.sh "" "$@"; }

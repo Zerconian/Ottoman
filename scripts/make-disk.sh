@@ -9,17 +9,20 @@ IMG=${1:-localhost/ottoman:dev}
 OUT=${2:-$(pwd)/build/disk}
 # The installed system keeps the image NAME it was built from as its update reference. A disk built from
 # localhost/ottoman:dev can never update (found 2026-11-03). Build from the registry name instead: the dev
-# registry on the build host's LAN address, reachable from QEMU user networking and from the Tiny alike.
-IMAGE_REF=${IMAGE_REF:-<build-host>:18821/ottoman:dev}
+# registry on the build host's LAN address (DEV_REGISTRY_HOST), reachable from QEMU user networking and from the Tiny alike.
+. ./scripts/dev-env.sh
+IMAGE_REF=${IMAGE_REF:-$DEV_REGISTRY_HOST:18821/ottoman:dev}
 TYPE=${TYPE:-qcow2}            # qcow2 | anaconda-iso | raw
 # bib applies customizations.files only on the disk path; the ISO path takes [customizations.installer] instead.
-if [ "$TYPE" = anaconda-iso ]; then CONFIG=${CONFIG-image/bib-config.dev-iso.toml}; else CONFIG=${CONFIG-image/bib-config.dev.toml}; fi   # CONFIG= (empty) for a clean build
+# The dev customizations are templates: the login user and key come from the dev env (never from git).
+mkdir -p build; for t in image/bib-config.dev*.toml.in; do sed -e "s|@DEV_USER@|$DEV_USER|" -e "s|@DEV_SSH_KEY@|$DEV_SSH_KEY|" "$t" > "build/$(basename "${t%.in}")"; done
+if [ "$TYPE" = anaconda-iso ]; then CONFIG=${CONFIG-build/bib-config.dev-iso.toml}; else CONFIG=${CONFIG-build/bib-config.dev.toml}; fi   # CONFIG= (empty) for a clean build
 ROOTFS=${ROOTFS:-xfs}
 if [ "$(id -u)" -ne 0 ]; then echo "run with sudo (bib needs privileged podman)" >&2; exit 2; fi
 mkdir -p "$OUT"
 # Always copy the rootless-built image into root's store: root's copy goes stale otherwise
 # (2026-11-02: the second dev disk silently reused the first run's image and lacked the fixes).
-SRC_USER=${SUDO_USER:-zerc}
+SRC_USER=${SUDO_USER:?run via sudo so the rootless image store can be found}
 SRC_ID=$(sudo -u "$SRC_USER" podman image inspect "$IMG" --format '{{.Id}}')
 if [ "$(podman image inspect "$IMG" --format '{{.Id}}' 2>/dev/null)" != "$SRC_ID" ]; then
   echo "copying $IMG ($SRC_ID) from $SRC_USER's rootless store"

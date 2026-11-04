@@ -1,5 +1,5 @@
 # Ottoman OS image, milestone M1: boots to a Wayland kiosk running Jellyfin Media Player.
-# Base follows the host Fedora release (<build-host> is on 44). Bump deliberately, never "latest".
+# Base follows the build host's Fedora release (44 at the time of writing). Bump deliberately, never "latest".
 # Stage 1: compile the launcher (ottoman-shell) with the same Fedora release's Qt.
 FROM quay.io/fedora/fedora:44 AS shell-build
 RUN dnf -y install cmake ninja-build gcc-c++ qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtwayland-devel && dnf clean all
@@ -11,13 +11,15 @@ FROM quay.io/fedora/fedora-bootc:44
 # DEV=1 (scripts/build-image.sh default) marks the build host's dev registry insecure so dev installs can pull updates.
 # It lives in /etc inside the image, so every dev image carries it across upgrades and a release image drops it.
 ARG DEV=0
+ARG DEV_USER=dev
+ARG DEV_REGISTRIES="10.0.2.2:18821"   # dev builds: insecure registries the test boxes may pull from (QEMU user-net gateway + the build host's LAN address)
 ARG GIT_SHA=unknown
 
 # RPM Fusion: Fedora proper ships no Intel VA-API drivers and strips H.264/HEVC from mesa's VA-API.
 # i965 (libva-intel-driver) is in rpmfusion-free, iHD (intel-media-driver) in rpmfusion-nonfree,
 # mesa-va-drivers-freeworld (AMD/Intel codecs re-enabled) in rpmfusion-free.
 # (First build 2026-11-02 failed with "No match for argument: libva-intel-driver": the host's
-#  dnf repoquery saw them only because <build-host> has RPM Fusion enabled.)
+#  dnf repoquery saw them only because the build host has RPM Fusion enabled.)
 RUN dnf -y install \
       https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
       https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm \
@@ -64,13 +66,11 @@ RUN sed -i 's/^set timeout_style=menu$/set timeout_style=hidden/; s/^set timeout
          -f "/usr/lib/modules/$KVER/initramfs.img" 2>&1 | tail -2 \
     && ls -la "/usr/lib/modules/$KVER/initramfs.img" \
     && lsinitrd "/usr/lib/modules/$KVER/initramfs.img" | grep -q plymouthd
-RUN if [ "$DEV" = 1 ]; then mkdir -p /etc/containers/registries.conf.d && printf '%s\n' \
-      '# dev builds only: <build-host> local registry from QEMU user networking (10.0.2.2) and the LAN' \
-      '[[registry]]' 'location = "10.0.2.2:18821"' 'insecure = true' \
-      '[[registry]]' 'location = "<build-host>:18821"' 'insecure = true' \
-      '[[registry]]' 'location = "<build-host>:18821"' 'insecure = true' \
+RUN if [ "$DEV" = 1 ]; then mkdir -p /etc/containers/registries.conf.d \
+    && { echo '# dev builds only: the build host dev registry, reachable from QEMU user networking and the LAN'; \
+         for r in $DEV_REGISTRIES; do printf '[[registry]]\nlocation = "%s"\ninsecure = true\n' "$r"; done; } \
       > /etc/containers/registries.conf.d/50-ottoman-dev.conf \
-    && printf 'zerc ALL=(ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/50-ottoman-dev && chmod 0440 /etc/sudoers.d/50-ottoman-dev; fi
+    && printf '%s ALL=(ALL) NOPASSWD: ALL\n' "$DEV_USER" > /etc/sudoers.d/50-ottoman-dev && chmod 0440 /etc/sudoers.d/50-ottoman-dev; fi
 # (the dev login user itself comes from bib: image/bib-config.dev*.toml; bib's ISO path ignores customizations.files AND
 #  installer.sudo-nopasswd, measured 2026-11-03, so the sudo rule lives in the DEV image too)
 # Build identity for About and for update checks: every build differs, so every push is a real update.

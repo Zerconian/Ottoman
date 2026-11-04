@@ -2,3 +2,4 @@ build/
 .cache/
 *.iso
 *.qcow2
+.ottoman-dev.env

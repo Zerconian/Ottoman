@@ -2,8 +2,8 @@
 # login user with an SSH key and marks the build host's local registry as insecure so the VM can
 # 'bootc switch' to freshly built images without another bib run. Never ship a disk built with this.
 [[customizations.user]]
-name = "zerc"
+name = "@DEV_USER@"
 groups = ["wheel"]
-key = "<dev-ssh-public-key>"
+key = "@DEV_SSH_KEY@"
 
-# Passwordless sudo for zerc and the insecure dev-registry entry are baked into DEV=1 images (image/Containerfile).
+# Passwordless sudo for the dev user and the insecure dev-registry entry are baked into DEV=1 images (image/Containerfile).

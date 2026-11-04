@@ -3,9 +3,9 @@
 # sudo asked for a password on the installed box), so the sudo rule is baked into DEV=1 images instead.
 # Never ship an ISO built with this.
 [[customizations.user]]
-name = "zerc"
+name = "@DEV_USER@"
 groups = ["wheel"]
-key = "<dev-ssh-public-key>"
+key = "@DEV_SSH_KEY@"
 
 [customizations.installer]
 unattended = true

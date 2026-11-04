@@ -1,7 +1,8 @@
 # Releases
 
-Built by `scripts/release.sh` (DEV=0 image pushed to `<private-gitea>/zerc/ottoman:stable` and an immutable
-`:<date>-<sha>` tag; clean branded installer ISO in `build/release/`, not committed). Installed boxes follow `:stable`.
+Built by `scripts/release.sh` or the GitHub workflow: a DEV=0 image pushed to `ghcr.io/zerconian/ottoman:stable` and an
+immutable `:<date>-<sha>` tag, plus the netinstall ISO attached to the GitHub Release. Installed boxes follow `:stable`.
+The first row predates the move to GitHub (2026-11-04): it went to a private registry and an offline ISO that was never published.
 
 | built (UTC) | tag | image digest | ISO | ISO sha256 (first 16) |
 |---|---|---|---|---|

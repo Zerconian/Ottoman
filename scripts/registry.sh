@@ -1,5 +1,5 @@
 #!/bin/bash
-# Local OCI registry on <build-host> for the dev loop: build -> push here -> `bootc switch` in the VM / on the Tiny.
+# Local OCI registry on the build host for the dev loop: build -> push here -> `bootc switch` in the VM / on the Tiny.
 # Rootless podman, port 18821 (Ottoman block), data in ~/.local/share/ottoman-registry. Fails loudly if the port is taken.
 set -euo pipefail
 case "${1:-start}" in
