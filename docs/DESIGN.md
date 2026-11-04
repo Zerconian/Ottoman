@@ -246,6 +246,34 @@ exact wording is not in the serial log (installer text goes to the VGA console).
 installer boot to identify it; it belongs to the anaconda ISO, not the installed system.
 
 ### 4.12 UI polish log
+- 2026-11-04 15:4x UTC, UI pass (zerc: "refinement and validation so it's not quite so rough around the edges").
+  Audit first: every launcher screen captured on the installed VM at 1920x1080 (the VM had been running at
+  1280x800; Settings > Display now holds the 1080p mode). Found and fixed, each with a before/after frame:
+  Settings > Display dumped eleven modes with duplicates and pushed the screensaver rows off the page (now
+  Display / Resolution / screensaver rows, Resolution opens a deduplicated sub-list centred on the current mode;
+  try-for-10-s / Enter-keeps / Back-reverts unchanged); the tile menu, Jellyfin sign-in and Wi-Fi password were
+  bare text floating over the dimmed page (one `Dialog` surface now: dim, panel, title, hint); the empty
+  Continue row was a blank grey box (tinted plate with the Jellyfin icon, "Your shows and movies land here");
+  the Settings button floated between header and rows (header line: wordmark, Jellyfin user, Settings pill,
+  clock); row titles were tracked caps ("Apps", "Continue watching" now); moving down scrolled the Apps row
+  clean off, leaving an empty screen (the row above now peeks in at 45 % with its name plates whole; scroll
+  positions come from the blocks, not fixed numbers); the footer explained the whole UI in one developer sentence
+  (one hint for the focused row); the on-screen keyboard covered the field being typed into (it echoes the
+  field's label and text along its top); Add app rows ran "up to 1080p (Widevine L3), Enter adds it to the row"
+  (now name, "Streams in Firefox, up to 1080p", and On the row / Not on the row / Hidden / Not installed, with the
+  action explained once at the bottom); tile notes were 12 px jargon ("Up to 1080p" at 15 px; the Widevine
+  mechanism stays in §4.5). Settings and Add app share the page header (title, one-line blurb, lists at y=180)
+  and a "Back returns home" corner. Proof: frames before/after at 1080p in the session scratchpad (audit/before1080, after, after2)
+  and a driven walk on the installed VM at 15:5x UTC: Resolution opened centred on `1920x1080@60 current`,
+  Up x11 reached 1280x800@75, Enter tried it ("reverting in 8 s" frame), the journal shows the revert
+  (`set mode Virtual-1 1920x1080@60.000Hz ok`); tile menu Move left wrote `order=tv.plex...` first; Add app >
+  Pluto TV wrote `shown=web:tubi, web:plutotv` and its tile appeared; Hide from the row wrote
+  `hidden=org.libretro.RetroArch`; the keyboard strip read "Server address qw|" after two OK presses (journal
+  `osk press q`, `osk press w`). Not re-proven on the VM: the first-run screens (unchanged apart from the Wi-Fi
+  dialog and the shared list rows) and the Wi-Fi join dialog (no Wi-Fi adapter in QEMU).
+- Side defect, same hour: the hidden FirstRun page called refresh() on every shell start, which ran
+  installDefaults (a Flatpak check per default app, twice per boot in the journal). Now only when the page is
+  shown; compiled, not yet proven on a VM boot.
 - 2026-11-03 23:5x UTC, screensaver (friend's "animated wallpaper" ask): modes clock / aurora / stars, picked in
   Settings > Display with "Screensaver after" (5/10/30 min/never) and "Display off after" (30/60 min/never) and a
   Preview row; the saver ends on any key release; Settings stays open after a preview. Proven on the installed VM:

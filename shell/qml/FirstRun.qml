@@ -55,7 +55,8 @@ Rectangle {
     }
     // First run is never "idle": the setup screen vanished behind the 5-minute screensaver on the ISO rehearsal (2026-11-03).
     function holdIdle(on) { sway.command("[app_id=\"ottoman-shell\"] inhibit_idle " + (on ? "open" : "none")); system.log("firstrun idle inhibit " + (on ? "on" : "off")) }
-    Component.onCompleted: { refresh(); if (visible) { langList.forceActiveFocus(); holdIdle(true) } }     // initial visible=true never fires onVisibleChanged
+    // Only when shown: the hidden page used to call refresh() too, which ran installDefaults on every shell start (2 x per boot in the journal, 2026-11-04).
+    Component.onCompleted: if (visible) { refresh(); langList.forceActiveFocus(); holdIdle(true) }     // initial visible=true never fires onVisibleChanged
     onVisibleChanged: { holdIdle(visible); if (visible) { refresh(); (languageDone ? list : langList).forceActiveFocus() } }
     Text { text: page.setup ? "Setting up Ottoman" : "Welcome to Ottoman"; color: "#f2f2f2"; font.pixelSize: 44; font.bold: true; anchors { left: parent.left; top: parent.top; margins: 48 } }
     Text { text: page.setup ? "Installing the default apps from Flathub. This happens once." : (page.languageDone ? "Connect this box to your network. Everything else lives in Settings." : "Choose your language."); color: "#8a8f98"; font.pixelSize: 22; anchors { left: parent.left; top: parent.top; leftMargin: 48; topMargin: 118 } }
