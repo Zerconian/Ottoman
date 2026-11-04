@@ -345,8 +345,23 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   takes them (Tab moves focus, typing works). Plex signs in by QR in either layout. The wrapper therefore forces the TV
   layout only once a profile exists (`active_app_profile_id` appears at sign-in); until then Plezy runs its desktop
   layout, which needs a keyboard (D-pad arrows do not move focus there). Upstream report pending (zerc's call).
-- Plezy ships Sentry telemetry (sentry threads live in the process; `crash_reporting` string in the binary, no visible
-  opt-out measured). Not Ottoman's data, but worth a line in the README when the tile goes default.
+- **Plezy telemetry, blackholed (zerc 2026-11-04: "at worst we could blackhole their telemetry, I'm not a big fan of
+  it"):** Plezy bundles sentry_flutter plus sentry-native with a crashpad handler; its DSN (in `libapp.so`) points at
+  `bugs.plezy.app`, a CNAME of `ice.plezy.app` (212.132.75.249 on 2026-11-04), which also serves `/auth/start`,
+  `/auth/result` (Plex sign-in relay), `/posters` and `/logs`. No opt-out in the app or its preferences; the SDKs read
+  `SENTRY_DSN` only as a fallback, so an env var cannot clear a code-set DSN. Measured on the VM with `resolvectl
+  monitor` plus a 0.5 s `ss` sampler (canary query proved the monitor alive): across a cold tile launch, home screen,
+  Back and Home (95 s, 312 samples) and again across an 18.6 s DirectPlay of a test clip (Jellyfin logged the start and
+  stop; 196 samples) Plezy made zero DNS queries and its only TCP peer was the Jellyfin server. So nothing is sent in
+  normal use on 2.25.0; the block covers crashes and whatever a later build adds.
+  Mechanism: `image/rootfs/etc/hosts` = the base image's file plus `0.0.0.0 bugs.plezy.app`. nsswitch puts `files`
+  first, so getaddrinfo (libcurl in sentry-native, Dart's `InternetAddress.lookup`) returns 0.0.0.0 and the connect fails
+  in 0 ms (`curl: (7)`, measured live on the VM; `ice.plezy.app` still answers, HTTP 404 on `/`). `resolvectl query`
+  still showed the real address right after the edit (resolved reloads `/etc/hosts` by inotify); only resolved-native
+  clients see that window, and Plezy is not one. /etc is 3-way merged by bootc, so an unmodified `/etc/hosts` picks up
+  the line on update as well as on a fresh install (proven 2026-11-04 23:07Z: VM updated 7b3bf88fe6e9 -> 3ff3b96384d7 by
+  `bootc upgrade`, `getent ahosts bugs.plezy.app` = 0.0.0.0 after the reboot, `ice.plezy.app` unchanged). README line
+  owed if the tile goes default.
 
 ### 4.14 Public-repo hygiene (zerc, 2026-11-04 19:1x UTC: "make sure there's nothing PII related in the repo")
 - Sweep over all 130 public commits and the tree: authors, e-mail addresses, IPv4, hostnames, keys and tokens, MAC
