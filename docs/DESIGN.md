@@ -276,8 +276,11 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   the stock runtime's header said FEDORA 44 INSTALLATION (a `.buildstamp` in the product.img overlay now reads
   OTTOMAN 44 INSTALLATION, frame 060) and the fresh-install sign-in card showed an "S" plate because the Jellyfin
   icon lookup never re-ran after the install (binding depends on apps.installedCount now; frame 109 shows the icon);
-  install 187 s, launcher 301 s; (2) first push to ghcr by hand from the build host, then the public
-  netinstall ISO installs on the VM and `bootc upgrade --check` works with no credential; (3) the GitHub workflow
+  install 187 s, launcher 301 s; (2) PARTLY DONE 17:3x UTC: `ghcr.io/zerconian/ottoman:edge` (DEV=0) pushed by hand, zerc made the package
+  public, `skopeo inspect --no-creds` reads it anonymously (sha256:943d78c7...); the public netinstall ISO install
+  and a credential-free `bootc upgrade --check` on the VM follow the first real release; (2b) DONE 17:5x UTC: history
+  rewritten with git-filter-repo (127 commits, 159 private-name lines to 0, authors to the GitHub noreply address) and
+  pushed to a fresh `zerc/Ottoman` on Gitea, the old repo renamed `Ottoman-archive`; (3) the GitHub workflow
   goes green on the mirror; (4) the installed test VM follows `ghcr.io/zerconian/ottoman:stable`.
 
 ### 4.12 UI polish log
