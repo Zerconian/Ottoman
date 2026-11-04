@@ -283,8 +283,11 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   six apps 287 s), the box boots that reference, has no auth.json in /etc or /usr/lib/ostree, no dev registry conf, and
   `bootc upgrade --check` answered "No changes in: docker://ghcr.io/zerconian/ottoman:stable" with no credential; (2b) DONE 17:5x UTC: history
   rewritten with git-filter-repo (127 commits, 159 private-name lines to 0, authors to the GitHub noreply address) and
-  pushed to a fresh `zerc/Ottoman` on Gitea, the old repo renamed `Ottoman-archive`; (3) the GitHub workflow
-  goes green on the mirror (mirror pending: the token needed the Workflows permission); (4) DONE: the test VM is that
+  pushed to a fresh `zerc/Ottoman` on Gitea, the old repo renamed `Ottoman-archive`; (3) DONE 2026-11-04 20:0x UTC: the GitHub workflow
+  went green on the mirror (run 41881766934 on 8d1c00c, 6.5 min on a hosted runner: launcher + DEV=0 image + push);
+  `:edge` on ghcr is Actions-built (3d1ebba2c40a, source label set). Three earlier runs built fine and failed only at the
+  push: the package had been created by a manual push, so the workflow token needed Write under the package's
+  Manage Actions access (zerc), and the mirror token needed the Workflows permission; (4) DONE: the test VM is that
   public install and follows `:stable`.
 
 ### 4.14 Public-repo hygiene (zerc, 2026-11-04 19:1x UTC: "make sure there's nothing PII related in the repo")
