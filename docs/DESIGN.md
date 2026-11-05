@@ -145,7 +145,12 @@ Detail: memory `project_landscape_2026-11.md`.
   published through avahi's D-Bus API as `_androidtvremote2._tcp` with `bt=<mac>`. The pairing code is a full-screen
   overlay in the launcher (Back cancels) and goes to the journal (root-only) for driven tests. Proof path without a phone:
   a scratch Python client that mirrors androidtvremote2 pairs over an ssh tunnel and sends DPAD_DOWN, which inputd must
-  log (chain 3, pending). Not covered until a phone is on the box's LAN: Google's own discovery and `code1` feature bits.
+  log. **Proven 2026-11-05 19:01 UTC (dev 169f76084e3b, commit f67edb4):** pairing_request_ack, options, configuration_ack,
+  the code overlay framed ("Pair a phone  E9AF80"), hash check ok, secret_ack, "atv: paired"; remote channel: remote_configure
+  both ways, set_active, start, DPAD_DOWN -> inputd "key down from 127.0.0.1", ping/pong; a stranger certificate on 6466 is
+  closed "is not paired"; the paired phone survived a reboot; avahi resolves `ottoman._androidtvremote2._tcp.local` to
+  ottoman.local port 6466 with TXT `bt=<mac>` (ResolveService over D-Bus, after the quint16 port fix). Not covered until a
+  phone is on the box's LAN: Google's own discovery and the `code1` feature bits (639 assumed).
 
 ### 4.7 Hardware: the floor is zerc's box
 
@@ -401,8 +406,9 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   still failed ("No such interface org.freedesktop.portal.Inhibit"). Fix: the shell serves the backend itself
   (`PortalInhibit`, D-Bus name org.freedesktop.impl.portal.desktop.ottoman, `ottoman.portal` + an
   /etc/xdg-desktop-portal/sway-portals.conf that points Inhibit at it); each request holds one inhibit on the existing
-  org.freedesktop.ScreenSaver logic (shell window `inhibit_idle open`) until the frontend closes the request. Proof pending
-  (chain 3): the Inhibit interface on the portal object, Plezy's wake lock without an error, inhibit_idle true during playback.
+  org.freedesktop.ScreenSaver logic (shell window `inhibit_idle open`) until the frontend closes the request. Proven 2026-11-05
+  18:5x UTC (dev 49df6af278d5): busctl lists org.freedesktop.portal.Inhibit on the portal object and a Plezy playback logs
+  "screensaver: inhibit 1 from portal ( plezy: wakelock active )" where it used to log "Wakelock enable failed".
 - **[D] Fullscreen guard (found 2026-11-04 23:19Z):** sway's `for_window ... fullscreen enable` applies once, at map. An
   app that drops its own fullscreen afterwards (Plezy did, after Esc presses at its home screen; the exact Plezy state
   was not pinned down, a second Esc at its home quits the app) is tiled by sway beside the launcher, half the screen
