@@ -8,6 +8,8 @@
 #include <QHostInfo>
 #include <QStorageInfo>
 #include <QFile>
+#include <QUrl>
+#include <QHash>
 #include <QRegularExpression>
 #include <QDebug>
 
@@ -83,11 +85,36 @@ QVariantList System::sinks() const {
         const auto m = re.match(l);
         if (m.hasMatch()) res << QVariantMap{{"id", m.captured(2).toInt()}, {"name", m.captured(3)}, {"isDefault", m.captured(1) == "*"}};
     }
+    // Two cards can carry the same description (two emulated HDA cards on the VM both say "Built-in Audio Analog
+    // Stereo", measured 2026-11-05); number the repeats so the rows stay distinguishable.
+    QHash<QString, int> seen, nth;
+    for (const QVariant &v : res) seen[v.toMap().value("name").toString()]++;
+    for (QVariant &v : res) {
+        QVariantMap m = v.toMap(); const QString n = m.value("name").toString();
+        if (seen.value(n) > 1) { m["name"] = QString("%1 (%2)").arg(n).arg(++nth[n]); v = m; }
+    }
     return res;
 }
 bool System::setDefaultSink(int id) const { bool ok; run("wpctl", {"set-default", QString::number(id)}, 5000, &ok); return ok; }
 
 // ---- Network -------------------------------------------------------------------------------------
+// The phone remote (ottoman-inputd, :18820) without an app: the QR code opens the page by IP (every phone can scan
+// one; .local names fail on older Android), the caption also shows the mDNS name avahi registers (ottoman.local,
+// measured on the VM 2026-11-05). qrencode (in the image) writes the PNG once per address into XDG_RUNTIME_DIR.
+QVariantMap System::remote() const {
+    const QString ip = netStatus().value("ip").toString();
+    QVariantMap r{{"ip", ip}, {"url", ""}, {"localUrl", QString("http://%1.local:18820/").arg(QHostInfo::localHostName())}, {"qr", ""}};
+    if (ip.isEmpty()) return r;
+    const QString url = QString("http://%1:18820/").arg(ip); r["url"] = url;
+    const QString dir = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+    const QString png = QString("%1/ottoman-remote-%2.png").arg(dir.isEmpty() ? "/tmp" : dir, QString(ip).replace('.', '-'));
+    if (!QFile::exists(png)) {
+        bool ok = false; run("qrencode", {"-o", png, "-s", "6", "-m", "2", "-l", "M", url}, 5000, &ok);
+        if (!ok) { qWarning() << "remote: qrencode failed for" << url; return r; }
+    }
+    r["qr"] = QUrl::fromLocalFile(png).toString();
+    return r;
+}
 QVariantMap System::netStatus() const {
     QVariantMap st{{"kind", "none"}, {"iface", ""}, {"ip", ""}, {"connection", ""}, {"wifiAvailable", false}};
     const QStringList devs = QString::fromUtf8(run("nmcli", {"-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "dev"})).split('\n', Qt::SkipEmptyParts);

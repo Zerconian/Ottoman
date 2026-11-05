@@ -8,6 +8,8 @@
 #include "System.h"
 #include "ScreenSaverService.h"
 #include "ShellControl.h"
+#include "AtvRemote.h"
+#include "PortalInhibit.h"
 int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
     const bool saver = app.arguments().contains(QStringLiteral("--saver"));
@@ -27,8 +29,11 @@ int main(int argc, char *argv[]) {
     AppModel apps(&sway);
     Jellyfin jellyfin(&sway);
     ScreenSaverService screenSaver(&sway);
+    PortalInhibit portalInhibit(&screenSaver);   // xdg-desktop-portal Inhibit backend (Plezy, Flatpak browsers)
     ShellControl control;
     System system;
+    AtvRemote atv;   // Android TV Remote v2 server: phones without an app (DESIGN.md 4.6)
+    atv.start();
     qmlRegisterUncreatableType<ItemModel>("Ottoman", 1, 0, "ItemModel", "provided by Jellyfin");
     QObject::connect(&jellyfin, &Jellyfin::needApp, &apps, [&] { apps.launchFlatpak(QStringLiteral("org.jellyfin.JellyfinDesktop")); });
     QObject::connect(&jellyfin, &Jellyfin::played, &sway, [&](const QString &, bool ok) { if (ok) sway.showApp(QStringLiteral("org.jellyfin.JellyfinDesktop")); });
@@ -38,6 +43,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty(QStringLiteral("jellyfin"), &jellyfin);
     engine.rootContext()->setContextProperty(QStringLiteral("system"), &system);
     engine.rootContext()->setContextProperty(QStringLiteral("control"), &control);
+    engine.rootContext()->setContextProperty(QStringLiteral("atv"), &atv);
     engine.loadFromModule("Ottoman", "Main");
     if (engine.rootObjects().isEmpty()) return 1;
     return app.exec();

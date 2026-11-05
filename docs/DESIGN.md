@@ -126,6 +126,26 @@ Detail: memory `project_landscape_2026-11.md`.
   have a header), IR (kernel `rc` + ir-keytable), Bluetooth remotes and gamepads (bluez), and a
   phone web remote served on the LAN, into one key set: DPAD, OK, Back, Home, Menu, Play/Pause,
   volume. Apps see standard keyboard/gamepad events.
+- **Phone without an app (zerc 2026-11-05):** the browser remote on :18820 stays as the fallback ("leaves the door open in the worst
+  scenarios"). Polish, 2026-11-05: the first-run network page and Settings > Network show a QR code of `http://<ip>:18820/`
+  (qrencode in the image, PNG per address in XDG_RUNTIME_DIR) and the mDNS name `http://ottoman.local:18820/` (avahi-daemon was
+  already enabled in the base image; the VM journal shows "Host name is ottoman.local"; a second box becomes ottoman-2.local).
+  The QR carries the IP because older Android does not resolve .local. Next, accepted by zerc: an Android TV Remote v2 server in
+  inputd (mDNS `_androidtvremote2._tcp`, TLS pairing on 6467 with a 6-hex code on screen, remote channel on 6466, protobuf), so
+  an Android phone's built-in Google TV remote sees the box as a TV; iPhones keep the page. Protocol notes in the brain
+  (project_m3_phone_remote.md); first live test needs a phone on the box's LAN (the VM's user networking hides mDNS; zerc
+  allowed a VM network change "as long as we don't break anything else").
+  **Implemented 2026-11-05 (`shell/src/AtvRemote.*`, in the shell rather than inputd because Python's ssl cannot take a
+  self-signed client certificate while QSslSocket's QueryPeer can):** self-signed RSA server certificate made once by the
+  openssl CLI into ~/.config/ottoman/atv, QSslServer on 6467 (pairing) and 6466 (remote), a hand-written protobuf codec
+  (varint + length-delimited is all the protocol uses), the Polo pairing exchange with the code = hash[0] + two random
+  bytes (hash = SHA-256 over both RSA keys' modulus and exponent and the code's last two bytes, as the clients compute it),
+  paired client certificates kept by SHA-256 digest under atv/clients, the remote channel refused to any other certificate,
+  key codes mapped to inputd's names and forwarded to its HTTP API (uinput stays root-only), pings every 5 s, the service
+  published through avahi's D-Bus API as `_androidtvremote2._tcp` with `bt=<mac>`. The pairing code is a full-screen
+  overlay in the launcher (Back cancels) and goes to the journal (root-only) for driven tests. Proof path without a phone:
+  a scratch Python client that mirrors androidtvremote2 pairs over an ssh tunnel and sends DPAD_DOWN, which inputd must
+  log (chain 3, pending). Not covered until a phone is on the box's LAN: Google's own discovery and `code1` feature bits.
 
 ### 4.7 Hardware: the floor is zerc's box
 
@@ -344,7 +364,12 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   shows the key events; foot types fine; `GTK_IM_MODULE` makes no difference) and nothing appears; the desktop layout
   takes them (Tab moves focus, typing works). Plex signs in by QR in either layout. The wrapper therefore forces the TV
   layout only once a profile exists (`active_app_profile_id` appears at sign-in); until then Plezy runs its desktop
-  layout, which needs a keyboard (D-pad arrows do not move focus there). Upstream report pending (zerc's call).
+  layout, which needs a keyboard (D-pad arrows do not move focus there). No upstream report (zerc 2026-11-05).
+  Hypothesis tested 2026-11-05 18:26Z (profile moved aside, `force_tv_mode=true` written directly, Plezy launched in
+  the session, every key framed): the TV layout's "Connect to Jellyfin" form takes Enter on the Server URLs field,
+  Down to "Find server", Enter ("Enter your Jellyfin server URL"), Tab back to the field, and no on-screen keyboard
+  appears at any step, so the `_TvVirtualKeyboardDialogState` in the binary does not serve this form; the desktop
+  layout until sign-in stays.
 - **Plezy telemetry, blackholed (zerc 2026-11-04: "at worst we could blackhole their telemetry, I'm not a big fan of
   it"):** Plezy bundles sentry_flutter plus sentry-native with a crashpad handler; its DSN (in `libapp.so`) points at
   `bugs.plezy.app`, a CNAME of `ice.plezy.app` (212.132.75.249 on 2026-11-04), which also serves `/auth/start`,
@@ -362,6 +387,22 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   the line on update as well as on a fresh install (proven 2026-11-04 23:07Z: VM updated 7b3bf88fe6e9 -> 3ff3b96384d7 by
   `bootc upgrade`, `getent ahosts bugs.plezy.app` = 0.0.0.0 after the reboot, `ice.plezy.app` unchanged). README line
   owed if the tile goes default.
+- **[MD] Portals dead in the TV session (found 2026-11-05 18:2x UTC, fixed in sway.config, proof pending):** every
+  `xdg-desktop-portal.service` start failed with "result 'dependency'" (79 times per boot on the VM) because
+  graphical-session.target was never active and the user manager never got WAYLAND_DISPLAY: sway runs from a system unit,
+  not a session manager. Effects measured: Plezy "Wakelock enable failed ... org.freedesktop.portal.Desktop: startup job
+  failed" on every playback (its idle inhibit goes through the portal, so a long Plezy film would meet the 5 min
+  screensaver), "Failed to read XDG desktop portal settings" 54 times, Qt "Failed to register with host portal". Fix:
+  `exec_always dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK` and
+  `exec_always systemctl --user restart sway-session.target` (Fedora's sway ships the target; it BindsTo
+  graphical-session.target, which the portal units are PartOf). Proven 2026-11-05 18:4x UTC: all five units active and
+  the environment imported. Second half of the defect: Fedora's sway-portals.conf maps `org.freedesktop.impl.portal.Inhibit`
+  to `none` (xdg-desktop-portal-gtk's Inhibit needs gnome-session, issue 465), so with the portal up Plezy's wake lock
+  still failed ("No such interface org.freedesktop.portal.Inhibit"). Fix: the shell serves the backend itself
+  (`PortalInhibit`, D-Bus name org.freedesktop.impl.portal.desktop.ottoman, `ottoman.portal` + an
+  /etc/xdg-desktop-portal/sway-portals.conf that points Inhibit at it); each request holds one inhibit on the existing
+  org.freedesktop.ScreenSaver logic (shell window `inhibit_idle open`) until the frontend closes the request. Proof pending
+  (chain 3): the Inhibit interface on the portal object, Plezy's wake lock without an error, inhibit_idle true during playback.
 - **[D] Fullscreen guard (found 2026-11-04 23:19Z):** sway's `for_window ... fullscreen enable` applies once, at map. An
   app that drops its own fullscreen afterwards (Plezy did, after Esc presses at its home screen; the exact Plezy state
   was not pinned down, a second Esc at its home quits the app) is tiled by sway beside the launcher, half the screen

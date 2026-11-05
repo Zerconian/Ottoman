@@ -7,6 +7,7 @@ Rectangle {
     anchors.fill: parent
     color: "#101214"
     property var st: ({kind: "none", ip: "", wifiAvailable: false})
+    property var remoteInfo: ({})          // phone remote QR once the network is up (system.remote())
     property var wifi: []
     property string message: ""
     property string joinSsid: ""
@@ -20,6 +21,7 @@ Rectangle {
         const items = []
         if (st.kind !== "none") items.push({label: "Continue", value: (st.kind === "ethernet" ? "Wired" : "Wi-Fi") + "  " + st.ip, action: "done"})
         else items.push({label: "Not connected", value: st.wifiAvailable ? "" : "plug in a network cable"})
+        page.remoteInfo = st.kind !== "none" ? system.remote() : {}
         if (st.wifiAvailable) { items.push({label: "Scan for Wi-Fi networks", value: "", action: "scan"}); for (const w of wifi) items.push({label: (w.active ? "✓ " : "") + w.ssid, value: w.signal + "%  " + (w.security || "open"), action: "join", ssid: w.ssid, security: w.security}) }
         items.push({label: "Refresh", value: "", action: "refresh"})
         list.items = items; if (list.currentIndex < 0) list.currentIndex = 0
@@ -66,11 +68,17 @@ Rectangle {
         onCurrentIndexChanged: if (activeFocus) system.log("firstrun language option " + currentIndex) }
     OptionList { id: setupList; visible: page.setup; anchors { left: parent.left; right: parent.right; top: parent.top; bottom: parent.bottom; margins: 48; topMargin: 180; bottomMargin: 110 }
         onActivated: function(i) { const it = items[i]; if (!it || !it.action) return; if (it.action === "retry") { page.setupRows = page.setupRows.map(function(x) { return {label: x.label, value: x.value === "failed" ? "waiting" : x.value} }); items = page.setupRows; apps.installDefaults() } else if (it.action === "finish") { system.markFirstRunDone(); page.done() } } }
-    OptionList { id: list; visible: page.languageDone && !page.setup; anchors { left: parent.left; right: parent.right; top: parent.top; bottom: parent.bottom; margins: 48; topMargin: 180; bottomMargin: 110 }
+    OptionList { id: list; visible: page.languageDone && !page.setup; anchors { left: parent.left; right: parent.right; top: parent.top; bottom: parent.bottom; margins: 48; topMargin: 180; bottomMargin: 110; rightMargin: page.qrShown ? 268 : 48 }
         onActivated: function(i) { act(i) }
         onActiveFocusChanged: if (activeFocus && items[currentIndex]) system.log("firstrun focus " + currentIndex + " " + items[currentIndex].label)
         onCurrentIndexChanged: if (activeFocus && items[currentIndex]) system.log("firstrun option " + currentIndex + " " + items[currentIndex].label) }
     Text { text: page.message.length ? page.message : (page.prefetching && !page.setup ? "Downloading the default apps in the background (" + page.prefetchDone + " of " + page.setupRows.length + " done). Continue whenever you like." : ""); color: "#d8dadf"; font.pixelSize: 22; anchors { left: parent.left; bottom: parent.bottom; margins: 48 } }
+    // Phone remote QR, shown as soon as the box has an address: the remote page is the first thing a new box needs.
+    property bool qrShown: languageDone && !setup && !!remoteInfo.qr
+    Column { visible: page.qrShown; spacing: 10; width: 220
+             anchors { right: parent.right; top: parent.top; rightMargin: 48; topMargin: 40 }
+        Image { source: page.remoteInfo.qr || ""; width: 168; height: 168; smooth: false; anchors.horizontalCenter: parent.horizontalCenter }
+        Text { width: 220; wrapMode: Text.WrapAnywhere; horizontalAlignment: Text.AlignHCenter; text: "Phone remote: scan, or open\n" + (page.remoteInfo.localUrl || ""); color: "#8a8f98"; font.pixelSize: 16 } }
     Item { id: joinPanel; visible: false; anchors.fill: parent
         Dialog { title: "Join " + page.joinSsid; hint: "Menu on the remote opens the keyboard. Enter joins, Back cancels."
             Field { id: joinPass; label: "Password"; password: true; onAccepted: system.wifiJoin(page.joinSsid, joinPass.text) } }

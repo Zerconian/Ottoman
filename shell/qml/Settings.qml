@@ -14,6 +14,7 @@ Rectangle {
     property string sub: ""                 // "" or "modes": a second-level list inside a section
     property string subOutput: ""
     property string message: ""
+    property var remoteInfo: ({})           // {ip, url, localUrl, qr} from system.remote(), Network section
     property var pendingMode: null          // {output, mode, previous} while the 10 s revert runs
     property int revertLeft: 0
     function open() { section = 0; sub = ""; sections_.currentIndex = 0; sections_.forceActiveFocus(); reload(); system.log("settings open") }
@@ -23,6 +24,8 @@ Rectangle {
         if (section === 0) {
             const st = system.netStatus()
             items.push({label: "Connection", value: st.kind === "none" ? "Not connected" : (st.kind === "ethernet" ? "Wired" : "Wi-Fi") + "  " + st.ip + (st.connection ? "  (" + st.connection + ")" : "")})
+            const rm = system.remote(); page.remoteInfo = rm
+            if (rm.url) { items.push({label: "Phone remote", value: rm.localUrl}); items.push({label: "Phone remote by address", value: rm.url}) }
             if (!st.wifiAvailable) items.push({label: "Wi-Fi", value: "No Wi-Fi adapter"})
             else { items.push({label: "Scan for Wi-Fi networks", value: "", action: "scan"}); for (const w of (page.wifi || [])) items.push({label: (w.active ? "✓ " : "") + w.ssid, value: w.signal + "%  " + (w.security || "open"), action: "join", ssid: w.ssid, security: w.security}) }
         } else if (section === 1 && sub === "modes") {
@@ -110,12 +113,18 @@ Rectangle {
     }
     OptionList {
         id: options
-        anchors { left: sections_.right; right: parent.right; top: parent.top; bottom: parent.bottom; leftMargin: 40; rightMargin: 48; topMargin: 180; bottomMargin: 120 }
+        anchors { left: sections_.right; right: parent.right; top: parent.top; bottom: parent.bottom; leftMargin: 40; rightMargin: page.qrShown ? 268 : 48; topMargin: 180; bottomMargin: 120 }
         onActivated: function(i) { system.log("settings activate " + (items[i] ? items[i].label : i)); if (!keepMode()) act(i) }
         onCurrentIndexChanged: if (activeFocus && items[currentIndex]) system.log("settings option " + currentIndex + " " + items[currentIndex].label)
         onActiveFocusChanged: if (activeFocus && items[currentIndex]) system.log("settings focus options " + currentIndex + " " + items[currentIndex].label)
         Keys.onLeftPressed: if (page.sub.length) page.closeSub(); else sections_.forceActiveFocus()
     }
+    // Phone remote QR (Network section): scan it with the phone's camera, no app to install.
+    Column { visible: page.section === 0 && page.sub === "" && !!page.remoteInfo.qr; spacing: 10
+             anchors { right: parent.right; top: parent.top; rightMargin: 48; topMargin: 40 }
+        Image { source: page.remoteInfo.qr || ""; width: 168; height: 168; smooth: false; anchors.horizontalCenter: parent.horizontalCenter }
+        Text { text: "Scan for the phone remote"; color: "#8a8f98"; font.pixelSize: 16; anchors.horizontalCenter: parent.horizontalCenter } }
+    property bool qrShown: section === 0 && sub === "" && !!remoteInfo.qr   // the option list leaves room for the QR column
     Text { text: page.message; color: "#d8dadf"; font.pixelSize: 22; anchors { left: parent.left; bottom: parent.bottom; margins: 48 } }
     Text { text: page.sub.length ? "Back returns to Display" : "Back returns home"; color: "#555a63"; font.pixelSize: 18; anchors { right: parent.right; bottom: parent.bottom; margins: 48 } }
     // Wi-Fi password entry

@@ -130,6 +130,15 @@ Window {
     Settings { id: settings; visible: false; z: 50; onPreviewRequested: win.keepOnActivate = true; onDone: { visible = false; focusRow(rowIndex) } }
     TileMenu { id: tileMenu; visible: false; z: 55; onDone: focusRow(0) }
     AddApp { id: addApp; visible: false; z: 55; onDone: focusRow(0) }
+    // Phone pairing code (Android TV Remote server, DESIGN.md 4.6): shown while a phone asks to pair; Back cancels.
+    Rectangle { id: atvPair; visible: atv.pairingCode.length > 0; anchors.fill: parent; color: "#e6101214"; z: 60
+        onVisibleChanged: { if (visible) forceActiveFocus(); else focusRow(0); system.log("atv pairing overlay " + (visible ? "shown" : "hidden")) }
+        Column { anchors.centerIn: parent; spacing: 18
+            Text { text: "Pair a phone"; color: "#f2f2f2"; font.pixelSize: 44; font.bold: true; anchors.horizontalCenter: parent.horizontalCenter }
+            Text { text: atv.pairingCode; color: "#ffffff"; font.pixelSize: 120; font.bold: true; font.letterSpacing: 14; anchors.horizontalCenter: parent.horizontalCenter }
+            Text { text: "Type this code into the phone's remote. Back cancels."; color: "#8a8f98"; font.pixelSize: 22; anchors.horizontalCenter: parent.horizontalCenter } }
+        Keys.onEscapePressed: atv.cancelPairing()
+        Keys.onBackPressed: atv.cancelPairing() }
     FirstRun { id: firstRun; visible: !system.firstRunDone(); z: 60; onDone: { visible = false; focusRow(0); system.log("firstrun done") } }
     // On-screen keyboard overlay, shared by every Field.
     Item { id: osk; anchors.fill: parent; visible: false; z: 100

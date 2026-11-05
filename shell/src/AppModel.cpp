@@ -56,7 +56,10 @@ void AppModel::load() {
 }
 void AppModel::save() {
     QSettings s(appsConf(), QSettings::IniFormat);
-    s.setValue("order", m_order); s.setValue("hidden", m_hidden); s.setValue("shown", m_shown); s.sync();
+    // An empty QStringList is written by QSettings as the literal "@Invalid()" (seen in apps.conf on the VM 2026-11-05);
+    // drop the key instead so the file stays readable by hand.
+    auto put = [&](const char *k, const QStringList &v) { if (v.isEmpty()) s.remove(k); else s.setValue(k, v); };
+    put("order", m_order); put("hidden", m_hidden); put("shown", m_shown); s.sync();
 }
 
 void AppModel::rebuildRows() {

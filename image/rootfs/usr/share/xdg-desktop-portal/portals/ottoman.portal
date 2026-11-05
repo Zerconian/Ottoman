@@ -1,0 +1,4 @@
+[portal]
+DBusName=org.freedesktop.impl.portal.desktop.ottoman
+Interfaces=org.freedesktop.impl.portal.Inhibit;
+UseIn=sway

@@ -21,6 +21,7 @@ public:
     Q_INVOKABLE bool setDefaultSink(int id) const;
     // Network
     Q_INVOKABLE QVariantMap netStatus() const;                      // {kind, iface, ip, connection, wifiAvailable}
+    Q_INVOKABLE QVariantMap remote() const;                         // {ip, url, localUrl, qr}: the phone remote page (DESIGN.md 4.6)
     Q_INVOKABLE QVariantList wifiList() const;                      // [{ssid, signal, security, active}]
     Q_INVOKABLE void wifiJoin(const QString &ssid, const QString &password);   // async, busyText + joined()
     // Updates (sudo bootc ... via /etc/sudoers.d/ottoman)
