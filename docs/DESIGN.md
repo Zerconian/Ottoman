@@ -408,7 +408,9 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   /etc/xdg-desktop-portal/sway-portals.conf that points Inhibit at it); each request holds one inhibit on the existing
   org.freedesktop.ScreenSaver logic (shell window `inhibit_idle open`) until the frontend closes the request. Proven 2026-11-05
   18:5x UTC (dev 49df6af278d5): busctl lists org.freedesktop.portal.Inhibit on the portal object and a Plezy playback logs
-  "screensaver: inhibit 1 from portal ( plezy: wakelock active )" where it used to log "Wakelock enable failed".
+  "screensaver: inhibit 1 from portal ( plezy: wakelock active )" where it used to log "Wakelock enable failed". Tree check
+  19:1x UTC: during the playback the shell window shows `inhibit_idle: true (user: open)`; leaving the player logs
+  "screensaver: uninhibit 1" and "portal: inhibit released", so the screensaver is held exactly while Plezy plays.
 - **[D] Fullscreen guard (found 2026-11-04 23:19Z):** sway's `for_window ... fullscreen enable` applies once, at map. An
   app that drops its own fullscreen afterwards (Plezy did, after Esc presses at its home screen; the exact Plezy state
   was not pinned down, a second Esc at its home quits the app) is tiled by sway beside the launcher, half the screen
