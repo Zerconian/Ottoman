@@ -57,6 +57,32 @@ def press(name, hold_ms=0):
         ui.write(e.EV_KEY, code, 0); ui.syn()
     return True
 
+# Press and release as separate events, for remotes that report the finger (the phone's Android TV remote sends
+# START_LONG on touch down and END_LONG on touch up for every tap, 2026-11-05; a held 800 ms key made the compositor's
+# key repeat race across a row). A down with no up within 3 s is released anyway, so a dropped connection cannot pin a key.
+held = {}   # name -> monotonic time of the down
+def key_state(name, state):
+    if state == "down" and (name == "pointer" or pointer["on"]): return press(name)
+    if state == "up" and pointer["on"]: return True
+    code = KEYS.get(name)
+    if code is None or state not in ("down", "up"): return False
+    with lock:
+        if state == "down":
+            if name in held: return True
+            ui.write(e.EV_KEY, code, 1); ui.syn(); held[name] = time.monotonic()
+            threading.Timer(3.0, key_release_stuck, [name, held[name]]).start()
+        else:
+            t0 = held.pop(name, None)
+            if t0 is None: return True
+            ui.write(e.EV_KEY, code, 0); ui.syn()
+            if name == "menu" and time.monotonic() - t0 >= 0.5: pointer_set(not pointer["on"])
+    return True
+def key_release_stuck(name, t0):
+    with lock:
+        if held.get(name) != t0: return
+        held.pop(name); ui.write(e.EV_KEY, KEYS[name], 0); ui.syn()
+    log(f"key {name} released after 3 s without an up")
+
 PAGE = """<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no">
 <title>Ottoman remote</title><style>
 :root{color-scheme:dark}body{margin:0;background:#101214;color:#e6e7ea;font:18px system-ui;-webkit-user-select:none;user-select:none}
@@ -110,6 +136,9 @@ class H(http.server.BaseHTTPRequestHandler):
     def do_POST(self):
         u = urllib.parse.urlparse(self.path); q = urllib.parse.parse_qs(u.query)
         if u.path == "/power" and power(q.get("state", [""])[0]):
+            self.send_response(204); self.end_headers(); return
+        if u.path == "/key" and q.get("state") and key_state(q.get("name", [""])[0], q["state"][0]):
+            log(f"key {q['name'][0]} {q['state'][0]} from {self.client_address[0]}" + (" [pointer]" if pointer["on"] else ""))
             self.send_response(204); self.end_headers(); return
         if u.path == "/key" and press(q.get("name", [""])[0], int(q.get("hold", ["0"])[0] or 0)):
             log(f"key {q['name'][0]} from {self.client_address[0]}" + (" (hold)" if q.get("hold") else "") + (" [pointer]" if pointer["on"] else ""))

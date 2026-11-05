@@ -223,7 +223,9 @@ void AtvRemote::onRemoteConnection(QSslSocket *s) {
     }
     m_conns.insert(s, {});
     connect(s, &QSslSocket::readyRead, this, [this, s] { readFrames(s, &AtvRemote::handleRemote); });
-    connect(s, &QSslSocket::disconnected, this, [this, s] { m_conns.remove(s); s->deleteLater(); qInfo() << "atv: remote disconnected"; });
+    connect(s, &QSslSocket::disconnected, this, [this, s] {
+        for (const QString &k : std::as_const(m_conns[s].held)) forwardKey(k, "&state=up");   // a key the phone never released
+        m_conns.remove(s); s->deleteLater(); qInfo() << "atv: remote disconnected"; });
     qInfo() << "atv: remote connected from" << s->peerAddress().toString();
     // The TV speaks first: remote_configure{code1, device_info}, the client answers with its own.
     send(s, fl(1, fv(1, FEATURES) + fl(2, fs(1, "Ottoman") + fs(2, "Ottoman") + fv(3, 1) + fs(4, "1") + fs(5, "ottoman") + fs(6, "1.0"))));
@@ -244,13 +246,16 @@ void AtvRemote::handleRemote(QSslSocket *s, const QByteArray &msg) {
         const int kc = code ? int(code->vi) : 0, d = dir ? int(dir->vi) : 3;
         const QString name = KEYS.value(kc);
         if (name.isEmpty()) { qInfo() << "atv: unmapped key" << kc; return; }
-        if (d == 2) return;                                                    // END_LONG: the START_LONG already sent a held press
-        forwardKey(name, d == 1 ? 800 : 0);
+        // The phone's remote reports the finger: START_LONG on touch down, END_LONG on touch up, for every tap (measured
+        // with a Pixel 2026-11-05). Pass them through as a real down/up so a tap is a tap and a hold repeats like a remote.
+        if (d == 1) { c.held.insert(name); forwardKey(name, "&state=down"); }
+        else if (d == 2) { c.held.remove(name); forwardKey(name, "&state=up"); }
+        else forwardKey(name, "");
     } else if (field(fs_, 3)) { qInfo() << "atv: remote_error from the phone"; }
 }
 
-void AtvRemote::forwardKey(const QString &name, int holdMs) {
-    QNetworkRequest req(QUrl(QString("http://127.0.0.1:18820/key?name=%1%2").arg(name, holdMs ? QString("&hold=%1").arg(holdMs) : QString())));
+void AtvRemote::forwardKey(const QString &name, const QString &extra) {
+    QNetworkRequest req(QUrl(QString("http://127.0.0.1:18820/key?name=%1%2").arg(name, extra)));
     QNetworkReply *r = m_nam->post(req, QByteArray());
     connect(r, &QNetworkReply::finished, this, [this, r, name] { if (r->error()) qWarning() << "atv: inputd refused" << name << r->errorString(); else emit keyReceived(name); r->deleteLater(); });
 }

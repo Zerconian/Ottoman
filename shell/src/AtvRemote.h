@@ -40,7 +40,7 @@ signals:
     void keyReceived(const QString &name);          // after it went to inputd, for the journal / tests
 
 private:
-    struct Conn { QByteArray buf; QString clientName; QByteArray hash; int pings = 0; bool configured = false; };
+    struct Conn { QByteArray buf; QString clientName; QByteArray hash; int pings = 0; bool configured = false; QSet<QString> held; };
     bool ensureCertificate();
     bool listen(QSslServer *&srv, quint16 port, const char *what);
     void onPairingConnection(QSslSocket *s);
@@ -54,7 +54,7 @@ private:
     void loadPaired();
     void storePaired(const QSslCertificate &c, const QString &name);
     void publishMdns();
-    void forwardKey(const QString &name, int holdMs);
+    void forwardKey(const QString &name, const QString &extra);   // extra: "" tap, "&state=down" / "&state=up"
 
     QString m_dir;                                  // ~/.config/ottoman/atv
     QSslConfiguration m_ssl;
