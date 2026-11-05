@@ -26,6 +26,9 @@ the tiles say so. Local media (Jellyfin, Plex, Kodi), YouTube, free streaming si
 An offline installer that embeds the image (about 2.8 GB) can be built locally: `OFFLINE=1 scripts/release.sh`
 on a machine with the `make-disk.sh` sudo rule, or `sudo TYPE=anaconda-iso scripts/make-disk.sh` for a dev build.
 
+Taking it to a real box for the first time: `docs/HARDWARE.md` is the runbook (test installer with a login user, what
+to measure, `scripts/tiny-probe.sh` collects the hardware facts in one run).
+
 ## Layout
 - `image/` the OS image: `Containerfile`, `rootfs/` (units, sway config, scripts, greenboot check),
   `installer/` (kickstart, anaconda overlay), dev customization templates for test disks.
