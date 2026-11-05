@@ -377,9 +377,11 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   Plezy in the scratchpad, launcher fullscreen; resume = Plezy fullscreen (one benign extra restore of the launcher
   logged during the Home transition). Not caught by that build: the app QUITTING (`kill` over IPC left the launcher
   visible, focused, `fullscreen_mode` 0: sway emits `close`, no fullscreen event for the window underneath), so the
-  trigger set is now fullscreen_mode -> 0, close and focus. That second build compiled (load check ok) but its VM run
-  was stopped by the harness for host memory before the image built: close/focus triggers are UNPROVEN until
-  `scratchpad/guard-chain2.sh` is re-run.
+  trigger set is now fullscreen_mode -> 0, close and focus. Second build proven by zerc's run of `guard-chain2.sh`,
+  2026-11-05 00:02Z, VM at dev 7b1debbe0d3d: launch quiet; drop restored (log 00:03:16); suspend = Plezy in the
+  scratchpad, launcher fullscreen; resume = Plezy fullscreen; `kill` over IPC = launcher `fullscreen_mode` 1 within 2 s
+  (log 00:03:27, the case the first build missed); relaunch after the kill = Plezy fullscreen, launcher hidden, no
+  extra guard line. Not covered: real hardware, two apps alive at once (only the launcher and one app were up).
 ### 4.14 Public-repo hygiene (zerc, 2026-11-04 19:1x UTC: "make sure there's nothing PII related in the repo")
 - Sweep over all 130 public commits and the tree: authors, e-mail addresses, IPv4, hostnames, keys and tokens, MAC
   addresses, family/location words, rare capitalised words, home paths. Clean except three residues, all removed by a
