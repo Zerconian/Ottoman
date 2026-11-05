@@ -151,6 +151,15 @@ Detail: memory `project_landscape_2026-11.md`.
   closed "is not paired"; the paired phone survived a reboot; avahi resolves `ottoman._androidtvremote2._tcp.local` to
   ottoman.local port 6466 with TXT `bt=<mac>` (ResolveService over D-Bus, after the quint16 port fix). Not covered until a
   phone is on the box's LAN: Google's own discovery and the `code1` feature bits (639 assumed).
+  **Real phone, 2026-11-05 23:12 UTC:** a Pixel's Quick Settings "TV Remote" tile found the box and paired first try (the VM
+  reached through the build host: `LAN=1 scripts/vm-iso.sh` forwards 6466/6467/18824 on the host's addresses and
+  `scripts/vm-lan-publish.sh` announces the service from the host's avahi, since user-mode QEMU cannot carry the VM's mDNS).
+  Found and fixed the same evening: Google's remote sends every d-pad tap as key_inject START_LONG (touch down) then
+  END_LONG (touch up), never SHORT; mapped to an 800 ms held key it set off the compositor's key repeat (zerc: "goes 1 tile
+  over then rockets to the end"). inputd now takes `/key?name=X&state=down|up` as a real key down/up (3 s stuck-key
+  release; menu held 0.5 s toggles the pointer on the up) and the shell passes the directions through, releasing a
+  connection's held keys when it drops. Measured: tap 0 -> 1 -> 2, a 1.2 s hold repeats to 7; zerc on the Pixel afterwards:
+  "Looks fine". The phone's Settings search does not find the remote; it is the Quick Settings tile or the Google TV app.
 
 ### 4.7 Hardware: the floor is zerc's box
 
