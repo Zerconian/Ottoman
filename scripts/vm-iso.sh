@@ -17,6 +17,10 @@ GPU=virtio-vga; qemu-system-x86_64 -device "$GPU,help" >/dev/null 2>&1 || GPU=bo
 BOOT=(-cdrom "$ISO" -boot order=d); [ "${KEEP:-0}" = 1 ] && [ "${NOCD:-0}" = 1 ] && BOOT=()
 # AUDIO=N: N emulated Intel HDA output codecs on a silent backend, so PipeWire gets real sinks and Settings > Audio has
 # something to list and switch (the headless VM otherwise has no sound card at all; measured 2026-11-05). 2 proves a switch.
+# LAN=1: expose the phone-facing ports on every host address (the browser remote on :18824, the Android TV Remote server
+# on 6466/6467) so a real phone on the LAN can reach the VM's shell. User-mode networking cannot carry mDNS to the LAN,
+# so pair this with scripts/vm-lan-publish.sh, which announces the service from the host's avahi (measured 2026-11-05).
+BIND=127.0.0.1; LANFWD=; if [ "${LAN:-0}" = 1 ]; then BIND=0.0.0.0; LANFWD=",hostfwd=tcp:0.0.0.0:6466-:6466,hostfwd=tcp:0.0.0.0:6467-:6467"; fi
 SND=(); if [ "${AUDIO:-0}" -gt 0 ]; then SND=(-audiodev none,id=a0); for i in $(seq 1 "$AUDIO"); do SND+=(-device "intel-hda,id=hda$i" -device "hda-output,bus=hda$i.0,audiodev=a0"); done; fi
 setsid qemu-system-x86_64 -accel kvm -cpu host -smp 4 -m "$MEM" \
   -drive if=pflash,format=raw,readonly=on,file="$OVMF" \
@@ -24,8 +28,8 @@ setsid qemu-system-x86_64 -accel kvm -cpu host -smp 4 -m "$MEM" \
   -drive file="$DISK",if=virtio,format=qcow2 "${BOOT[@]}" \
   -device "$GPU" -display none -vnc 127.0.0.1:12920 \
   -device virtio-keyboard -device virtio-tablet "${SND[@]}" \
-  -netdev user,id=n0,hostfwd=tcp:127.0.0.1:18822-:22,hostfwd=tcp:127.0.0.1:18824-:18820 -device virtio-net-pci,netdev=n0 \
+  -netdev "user,id=n0,hostfwd=tcp:127.0.0.1:18822-:22,hostfwd=tcp:$BIND:18824-:18820$LANFWD" -device virtio-net-pci,netdev=n0 \
   -monitor unix:"$VMDIR/mon.sock",server,nowait -serial file:"$VMDIR/serial.log" -pidfile "$VMDIR/qemu.pid" >"$VMDIR/qemu.out" 2>&1 < /dev/null &
 sleep 2
 echo "installer VM pid $(cat "$VMDIR/qemu.pid" 2>/dev/null || echo '?'): VNC 127.0.0.1:18820, disk $DISK ($SIZE), monitor $VMDIR/mon.sock"
-echo "after installing: KEEP=1 NOCD=1 scripts/vm-iso.sh boots the installed disk (AUDIO=N adds N HDA sound cards)"
+echo "after installing: KEEP=1 NOCD=1 scripts/vm-iso.sh boots the installed disk (AUDIO=N adds N HDA sound cards, LAN=1 exposes the phone ports on the LAN)"
