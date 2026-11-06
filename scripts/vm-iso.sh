@@ -12,7 +12,7 @@ mkdir -p "$VMDIR"
 [ -f "$DISK" ] && [ "${KEEP:-0}" = 1 ] || qemu-img create -q -f qcow2 "$DISK" "$SIZE"
 # OVMF vars copy so the firmware can keep boot entries the installer writes
 [ -f "$VMDIR/OVMF_VARS.fd" ] || cp /usr/share/edk2/ovmf/OVMF_VARS.fd "$VMDIR/OVMF_VARS.fd"
-GPU=virtio-vga; qemu-system-x86_64 -device "$GPU,help" >/dev/null 2>&1 || GPU=bochs-display
+GPU=${GPU:-virtio-vga}; qemu-system-x86_64 -device "$GPU,help" >/dev/null 2>&1 || GPU=bochs-display   # GPU=bochs-display: plain framebuffer, no virtio damage transfers
 : > "$VMDIR/serial.log"; rm -f "$VMDIR/mon.sock"
 BOOT=(-cdrom "$ISO" -boot order=d); [ "${KEEP:-0}" = 1 ] && [ "${NOCD:-0}" = 1 ] && BOOT=()
 # AUDIO=N: N emulated Intel HDA output codecs on a silent backend, so PipeWire gets real sinks and Settings > Audio has

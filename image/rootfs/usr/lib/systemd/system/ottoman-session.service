@@ -21,6 +21,9 @@ Environment=XDG_CURRENT_DESKTOP=sway
 Environment=QT_QPA_PLATFORM=wayland
 WorkingDirectory=/var/home/ottoman
 ExecStart=/usr/bin/sway -c /usr/share/ottoman/sway.config
+# sway's exec children (shell.sh, idle.sh, apps) sit in the logind session scope, outside this cgroup: on stop or crash
+# restart, end that session too, or the old shell loop and swayidle survive next to the new ones (2026-11-05).
+ExecStopPost=+/usr/bin/loginctl terminate-user ottoman
 Restart=always
 RestartSec=2
 

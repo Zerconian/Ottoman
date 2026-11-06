@@ -25,7 +25,7 @@ Window {
     // from Settings (the page stays open so the next mode can be tried; measured 2026-11-03).
     property bool keepOnActivate: false
     onActiveChanged: if (active) { if (keepOnActivate) keepOnActivate = false; else goHome() }
-    Connections { target: control; function onHomeRequested() { goHome() } }     // home.sh over D-Bus, works when already active
+    Connections { target: control; function onHomeRequested() { sway.hideAll(); goHome() } }     // home.sh over D-Bus: hide the apps (two-message hide), then reset
 
     // Header line: wordmark left; Jellyfin user, Settings and the clock right, all on one baseline.
     Text { text: "OTTOMAN"; color: "#8a8f98"; font.pixelSize: 28; font.letterSpacing: 6; anchors { left: parent.left; top: parent.top; margins: 48 } }

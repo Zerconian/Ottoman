@@ -39,7 +39,7 @@ RUN dnf -y install \
       flatpak xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-wlr sudo \
       dejavu-sans-fonts glibc-langpack-en \
       polkit dbus-daemon \
-      python3-evdev qrencode \
+      python3-evdev qrencode grim \
       greenboot greenboot-default-health-checks \
       plymouth plymouth-theme-spinner plymouth-system-theme \
     && dnf clean all \

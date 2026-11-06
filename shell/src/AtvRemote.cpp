@@ -256,6 +256,7 @@ void AtvRemote::handleRemote(QSslSocket *s, const QByteArray &msg) {
 
 void AtvRemote::forwardKey(const QString &name, const QString &extra) {
     QNetworkRequest req(QUrl(QString("http://127.0.0.1:18820/key?name=%1%2").arg(name, extra)));
+    req.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/x-www-form-urlencoded"));
     QNetworkReply *r = m_nam->post(req, QByteArray());
     connect(r, &QNetworkReply::finished, this, [this, r, name] { if (r->error()) qWarning() << "atv: inputd refused" << name << r->errorString(); else emit keyReceived(name); r->deleteLater(); });
 }

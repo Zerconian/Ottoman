@@ -13,7 +13,8 @@ public:
     Q_INVOKABLE bool command(const QString &cmd) const;
     // app_ids of all mapped toplevels (scratchpad included), from get_tree.
     QStringList appIds() const;
-    Q_INVOKABLE void hideApp(const QString &appId) const;   // move to scratchpad, keep running
+    Q_INVOKABLE void hideApp(const QString &appId) const;   // fullscreen disable, then move to scratchpad (two messages, see .cpp)
+    Q_INVOKABLE void hideAll() const;                       // Home: hide every visible app that way, then focus the shell
     Q_INVOKABLE void showApp(const QString &appId) const;   // scratchpad show + fullscreen
     Q_INVOKABLE void killApp(const QString &appId) const;
     Q_INVOKABLE void focusShell() const;

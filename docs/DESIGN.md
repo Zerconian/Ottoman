@@ -440,6 +440,27 @@ installer boot to identify it; it belongs to the anaconda ISO, not the installed
   scratchpad, launcher fullscreen; resume = Plezy fullscreen; `kill` over IPC = launcher `fullscreen_mode` 1 within 2 s
   (log 00:03:27, the case the first build missed); relaunch after the kill = Plezy fullscreen, launcher hidden, no
   extra guard line. Not covered: real hardware, two apps alive at once (only the launcher and one app were up).
+- **"Mini mode" after Home (zerc 2026-11-05 23:29 UTC, Pixel remote): a sway 1.11 rendering bug, worked around.**
+  Jellyfin stayed drawn as a 640x600 box over the launcher after Home while the tree said it was hidden. Measured on the
+  VM with grim (in-guest, wlr-screencopy) against the QEMU screendump: byte-identical means, so the compositor draws it
+  and the Tiny will too. Mechanism (sway/desktop/transaction.c): arrange_fullscreen parks a fullscreen VIEW's scene node
+  in the workspace's fullscreen layer; a scratchpad hide only disables the container's own node; the view node only
+  comes back under the container when it is arranged on a workspace as non-fullscreen. "fullscreen disable, move
+  scratchpad" in one IPC line is one transaction, so that never happens. Trials (hide-trials, YouTube, 5 rounds each,
+  top-left 640x600 against a reference frame verified by eye): one line 0/5 clean, old `move scratchpad` 0/5, two IPC
+  messages back to back 5/5, two messages 500 ms apart 0/5 (the app re-requests fullscreen within 0.5 s). Rule: hide =
+  `fullscreen disable` then `move scratchpad` as two messages, no wait. Home now goes home.sh -> D-Bus Home ->
+  Sway::hideAll (two messages per visible app, then the shell fullscreen) with swaymsg lines as the no-shell fallback;
+  home.sh's old `scratchpad show` on the shell errored ("not in scratchpad") and aborted its line, which the fullscreen
+  guard had been masking. Final verify 2026-11-06 00:22-00:26 UTC on dev 8fb029fcf1e2: phone Home after YouTube x6 and
+  Jellyfin x3 = 9/9 clean, 18 hide commands in the journal. Lesson recorded in the brain: the first hour of this used a
+  wrong "clean" reference value and called stale frames clean; a baseline assertion caught it.
+- **Session restart left two shells (found 2026-11-05 23:42 UTC):** sway's exec children (shell.sh, swayidle, apps) live
+  in the logind session scope, not the service cgroup, so `systemctl restart ottoman-session` killed only sway; the old
+  shell.sh loop restarted its shell against the new compositor (two ottoman-shell processes, the hidden one owning the
+  remote ports). Fix: shell.sh exits when its SWAYSOCK is gone, and the unit's ExecStopPost=+loginctl terminate-user
+  ottoman ends the old session. Proven: restart -> 1 shell, 1 swayidle, 1 loop, launcher clean.
+
 ### 4.14 Public-repo hygiene (zerc, 2026-11-04 19:1x UTC: "make sure there's nothing PII related in the repo")
 - Sweep over all 130 public commits and the tree: authors, e-mail addresses, IPv4, hostnames, keys and tokens, MAC
   addresses, family/location words, rare capitalised words, home paths. Clean except three residues, all removed by a

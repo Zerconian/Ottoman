@@ -1,4 +1,5 @@
 #include "Sway.h"
+#include <functional>
 #include <QProcess>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -38,10 +39,36 @@ QStringList Sway::appIds() const {
     return ids;
 }
 
-void Sway::hideApp(const QString &appId) const { command(QStringLiteral("[app_id=\"%1\"] move scratchpad").arg(appId)); }
+// Hiding a fullscreen window is TWO IPC messages on purpose (measured 2026-11-06, docs/DESIGN.md 4.15): sway 1.11 parks
+// a fullscreen view's scene node in the workspace's fullscreen layer and only moves it back when the container is
+// arranged on a workspace as non-fullscreen. One line "fullscreen disable, move scratchpad" is one transaction, so that
+// arrangement never happens and the hidden window stays drawn at the origin (zerc's "mini mode"). Two messages queue
+// two transactions that apply in order; no wait between them, or the app asks for fullscreen again first (0/5 at 500 ms).
+void Sway::hideApp(const QString &appId) const {
+    command(QStringLiteral("[app_id=\"%1\"] fullscreen disable").arg(appId));
+    command(QStringLiteral("[app_id=\"%1\"] move scratchpad").arg(appId));
+}
+// Home: hide every visible app window the two-message way, then bring the shell forward.
+void Sway::hideAll() const {
+    bool ok;
+    const QByteArray out = run({QStringLiteral("-t"), QStringLiteral("get_tree")}, &ok);
+    if (ok) {
+        QStringList ids;
+        std::function<void(const QJsonObject &)> walkVisible = [&](const QJsonObject &n) {
+            const QString id = n.value(QStringLiteral("app_id")).toString();
+            if (!id.isEmpty() && id != QLatin1String("ottoman-shell") && n.value(QStringLiteral("visible")).toBool()) ids << id;
+            for (const char *key : {"nodes", "floating_nodes"})
+                for (const QJsonValue &c : n.value(QLatin1String(key)).toArray()) walkVisible(c.toObject());
+        };
+        walkVisible(QJsonDocument::fromJson(out).object());
+        for (const QString &id : ids) hideApp(id);
+    }
+    focusShell();
+}
 void Sway::showApp(const QString &appId) const { command(QStringLiteral("[app_id=\"%1\"] scratchpad show, fullscreen enable").arg(appId)); }
 void Sway::killApp(const QString &appId) const { command(QStringLiteral("[app_id=\"%1\"] kill").arg(appId)); }
-void Sway::focusShell() const { command(QStringLiteral("[app_id=\"ottoman-shell\"] scratchpad show, fullscreen enable, focus")); }
+// The shell is never in the scratchpad: a "scratchpad show" here errors and sway stops the line there (found 2026-11-05).
+void Sway::focusShell() const { command(QStringLiteral("[app_id=\"ottoman-shell\"] fullscreen enable, focus")); }
 
 // --- fullscreen guard: i3-ipc framing is "i3-ipc" + u32 length + u32 type (little endian) + payload.
 static QByteArray ipcFrame(quint32 type, const QByteArray &payload) {
